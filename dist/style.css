@@ -33,3 +33,6 @@ main{max-width:1060px;padding-top:20px}.top{height:68px}.compact-heading{display
 }
 @media(max-width:360px){.route-shortcuts{flex-wrap:wrap}.route-shortcuts button:first-child{flex-basis:100%}.route-shortcuts button:last-child{width:100%}.voice-questions{grid-template-columns:1fr}.app-tabs button,.senior-mode main .app-tabs button{font-size:15px}.demo-pill{letter-spacing:0}}
 @media(max-height:480px) and (max-width:640px){.app-tabs button{min-height:44px;padding:6px 2px}.app-tabs{padding-top:5px;padding-bottom:calc(5px + env(safe-area-inset-bottom))}}
+
+/* Regional map and explicit links to current transport providers. */
+#area-map{width:100%;height:clamp(220px,35dvh,360px);border:1px solid #82948c;border-radius:16px;background:#edf2ee}.map-actions{display:grid;gap:10px}.map-actions a{display:flex;align-items:center;justify-content:center;min-height:52px;padding:12px;text-align:center;text-decoration:none;white-space:normal;overflow-wrap:anywhere}#map-dialog p{overflow-wrap:anywhere}#map-dialog{max-height:90dvh;overflow-y:auto}#map-dialog a:focus-visible{outline:3px solid #14795f;outline-offset:3px}@media(max-width:640px){#map-dialog{max-height:100dvh;height:100dvh}.route-shortcuts{grid-template-columns:1fr 1fr}.route-shortcuts #open-journey{grid-column:1/-1}}
