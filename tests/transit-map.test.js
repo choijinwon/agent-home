@@ -16,3 +16,11 @@ test('route overview includes the southern detour as well as both endpoints',()=
  }
  assert.equal(stopConnections(context).features[0].geometry.coordinates.length,6);
 });
+
+test('H17 uses the east platform and never invents missing map segments',()=>{
+ const context={area:'aileen'},stops=routeForDestination(context,'H17');
+ assert.equal(stops[0].number,'55399');assert.equal(stops.at(-1).number,'55405');assert.equal(stops.length-1,9);
+ assert.deepEqual(stopConnections(context,'H17').features,[]);
+ assert.equal(routeForDestination(context,'H2')[0].number,'55398');
+ assert.equal(routeForDestination(context,'unknown'),null);
+});

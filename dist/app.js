@@ -243,7 +243,7 @@ function renderBoarding(){
  $('#boarding-origin-note').textContent='검색 결과에서 정류장 번호 55398을 확인한 뒤 도착지로 선택하고, 출발지를 현재 위치로 지정해 도보 길찾기를 시작하세요.';
  if(accessPrefs.stepFree)$('#boarding-origin-note').textContent+=' 계단 없는 경로와 저상버스 탑승 가능 여부는 별도 확인이 필요해요.';
 }
-$('#boarding-walk').addEventListener('click',()=>renderBoarding());
+
 
 commute=setupCommute({getContext:()=>({destination:settings.home,stepFree:accessPrefs.stepFree}),openMap:()=>$('#open-map').click(),speak:speakAnswer,notify,applyNeeds:needs=>{accessPrefs={...accessPrefs,...needs};try{localStorage.setItem('homebus-access',JSON.stringify(accessPrefs));}catch{}applyAccess();}});
 
