@@ -185,8 +185,9 @@ function activateView(name,{focusTab=false}={}){
   $('#view-'+button.dataset.view).hidden=!selected;
  }
  if(focusTab)tab.focus();
- // Keep the selected feature directly below the always-available tab bar.
- $('.app-tabs').scrollIntoView({block:'start',behavior:'instant'});
+ // Mobile navigation stays in thumb reach; show the chosen panel from its start.
+ if(window.matchMedia('(max-width: 640px)').matches)$('#view-'+name).scrollIntoView({block:'start',behavior:'instant'});
+ else $('.app-tabs').scrollIntoView({block:'start',behavior:'instant'});
 }
 const viewTabs=[...document.querySelectorAll('[role="tab"][data-view]')];
 for(const [index,tab] of viewTabs.entries()){
@@ -200,3 +201,11 @@ for(const [index,tab] of viewTabs.entries()){
 }
 $('#edit-destination').onclick=()=>{activateView('settings');$('#home').focus();};
 $('#quick-voice').onclick=()=>{activateView('voice');$('#voice-read').focus();};
+
+// Reserve exactly the space occupied by navigation, including text enlargement.
+function updateMobileNavSpace(){
+ const mobile=window.matchMedia('(max-width: 640px)').matches;
+ document.documentElement.style.setProperty('--mobile-nav-height',mobile?Math.ceil($('.app-tabs').getBoundingClientRect().height)+'px':'0px');
+}
+if('ResizeObserver' in window){const navObserver=new ResizeObserver(updateMobileNavSpace);navObserver.observe($('.app-tabs'));}
+window.addEventListener('resize',updateMobileNavSpace);updateMobileNavSpace();
