@@ -219,8 +219,9 @@ $('#open-map').onclick=()=>{
  const destination=names[settings.area]||settings.home;
  $('#map-destination').textContent='동탄역 → '+destination;
  renderBoarding();
- const query=new URL('https://www.google.com/maps/search/');query.search=new URLSearchParams({api:'1',query:destination});$('#destination-map').href=query.href;
- const directions=new URL('https://www.google.com/maps/dir/');directions.search=new URLSearchParams({api:'1',origin:'동탄역, 경기도 화성시 동탄역로 151',destination,travelmode:'transit'});$('#destination-directions').href=directions.href;
+ const searchTerm=settings.area==='aileen'?'동탄역에일린의뜰':destination;
+ $('#destination-map').href='https://map.kakao.com/link/search/'+encodeURIComponent(searchTerm);
+ $('#destination-directions').href='https://map.naver.com/p/search/'+encodeURIComponent(searchTerm);
  $('#bus-search-help').textContent=settings.area==='aileen'?'경기버스에서 동탄역을 검색하고 206·H2 후보의 현재 운행과 목적지 방향을 확인하세요. 같은 이름의 정류장도 방향이 다를 수 있어요.':'경기버스에서 동탄역을 검색한 후 목적지 방향의 정류장과 노선을 확인하세요. A1·B1·C1 같은 시연 번호는 실제 노선이 아니에요.';
  $('#area-map').src='https://www.openstreetmap.org/export/embed.html?bbox=127.075%2C37.182%2C127.110%2C37.209&layer=mapnik';
  $('#map-dialog').showModal();motionDemo.reset();$('#close-map').focus();
@@ -233,13 +234,10 @@ function renderBoarding(){
  $('#boarding-card').hidden=!known;
  if(!known)return;
  $('#boarding-details').innerHTML='<p><strong>승차 후보: 동탄역(서측) · 55398</strong></p><p>H2 · 병점역후문 방면<br>다음 정류장: 린스트라우스.한화<br>하차 후보: 에일린의뜰.중흥S클래스에코밸리 · 55405</p><p class="small">카카오맵 노선 안내에 따른 후보예요. 현재 운행·정류장 변경 여부는 탑승 전에 확인하세요. 206번의 승차 위치는 아직 확인하지 못했어요.</p><a href="https://m.map.kakao.com/actions/busDetailInfo?busId=B80430&busOrder=27&busStopId=BS331642" target="_blank" rel="noopener noreferrer">H2 노선 안내 확인 ↗</a>';
- const stop='동탄역(서측) 버스정류장 55398, 화성시';
- $('#boarding-search').href='https://www.google.com/maps/search/?'+new URLSearchParams({api:'1',query:stop});
- const fresh=mapLinks(currentPosition);
- const params=new URLSearchParams({api:'1',destination:stop,travelmode:'walking'});
- if(fresh)params.set('origin',`${currentPosition.latitude},${currentPosition.longitude}`);
- $('#boarding-walk').href='https://www.google.com/maps/dir/?'+params;
- $('#boarding-origin-note').textContent=fresh?'현재 위치를 출발점으로 사용해요. 길찾기를 누르면 좌표가 Google에 전달돼요.':'지도에서 현재 위치를 허용하거나 출발 위치를 직접 선택해 주세요. 이 앱은 위치를 자동 전송하지 않아요.';
+ const stop='동탄역 서측 정류장';
+ $('#boarding-search').href='https://map.kakao.com/link/search/'+encodeURIComponent(stop);
+ $('#boarding-walk').href='https://map.naver.com/p/search/'+encodeURIComponent(stop);
+ $('#boarding-origin-note').textContent='검색 결과에서 정류장 번호 55398을 확인한 뒤 도착지로 선택하고, 출발지를 현재 위치로 지정해 도보 길찾기를 시작하세요.';
  if(accessPrefs.stepFree)$('#boarding-origin-note').textContent+=' 계단 없는 경로와 저상버스 탑승 가능 여부는 별도 확인이 필요해요.';
 }
 $('#boarding-walk').addEventListener('click',()=>renderBoarding());
