@@ -1,0 +1,3 @@
+// OpenStreetMap way/619948539, retrieved 2026-09-16. ODbL.
+export const apartmentBoundary={"type": "Feature", "properties": {"name": "동탄2신도시 에일린의뜰"}, "geometry": {"type": "Polygon", "coordinates": [[[127.0861584, 37.1880616], [127.0878321, 37.1881043], [127.0877945, 37.1903949], [127.0862228, 37.1904248], [127.0862979, 37.1900274], [127.0863515, 37.1894889], [127.0862013, 37.1883564], [127.0861584, 37.1880616]]]}};
+export const places=[{"id": "station", "name": "동탄역", "coordinates": [127.0955764, 37.2003594]}, {"id": "stop", "name": "동탄역 서측 정류소", "coordinates": [127.0960506, 37.1996501]}, {"id": "home", "name": "동탄역 에일린의뜰", "coordinates": [127.0866271, 37.189115]}];

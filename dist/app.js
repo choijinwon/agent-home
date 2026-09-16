@@ -226,7 +226,7 @@ $('#open-map').onclick=()=>{
  $('#destination-directions').href='https://map.naver.com/p/search/'+encodeURIComponent(searchTerm);
  $('#bus-search-help').textContent=settings.area==='aileen'?'위 버튼에서 동탄역(서측) 55398의 실제 도착정보를 확인하세요. 206·H2의 운행 방향과 에일린의뜰 경유 여부도 확인해 주세요.':'위 버튼은 동탄역 서측 정류장 정보예요. 목적지에 따라 다른 정류장이 필요할 수 있어요. A1·B1·C1은 실제 노선이 아니에요.';
  $('#area-map').src='https://www.openstreetmap.org/export/embed.html?bbox=127.075%2C37.182%2C127.110%2C37.209&layer=mapnik';
- $('#map-dialog').showModal();motionDemo.reset();$('#close-map').focus();
+ $('#map-dialog').showModal();motionDemo.reset({area:settings.area});$('#close-map').focus();
 };
 $('#close-map').onclick=()=>$('#map-dialog').close();
 $('#map-dialog').addEventListener('close',()=>{motionDemo.pause(); $('#area-map').removeAttribute('src');if(mapOpener?.isConnected)mapOpener.focus();});
