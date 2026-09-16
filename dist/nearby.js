@@ -18,15 +18,15 @@ export function setupNearby(){
   }
   el('nearby-more').hidden=shown>=rows.length;
  }
- async function search(lat,lon,label){
+ async function search(lat,lon,label,preset){
   reset();const id=generation;originLabel=label;shown=5;abort=new AbortController();const requestAbort=abort;const timer=setTimeout(()=>requestAbort.abort(),20000);
   el('nearby-panel').setAttribute('aria-busy','true');status(`${label} 반경 800m의 정류소를 찾고 있어요…`);
   const url=new URL('https://www.google.com/maps/search/');url.search=new URLSearchParams({api:'1',query:`버스 정류장 near ${lat.toFixed(4)},${lon.toFixed(4)}`});
   el('nearby-search').href=url.href;el('nearby-search').hidden=false;
   try{
-   const response=await fetch('/api/nearby-stops',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lat,lon}),signal:requestAbort.signal});
+   const response=await fetch('/api/nearby-stops',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lat,lon,preset}),signal:requestAbort.signal});
    const data=await response.json();if(!response.ok)throw new Error();if(id!==generation)return;
-   rows=data.stops;render();status(rows.length?`${label} 주변 ${rows.length}곳 · 직선거리순 · ${new Date(data.updatedAt).toLocaleTimeString('ko-KR')} 조회`:'반경 800m에서 지도에 등록된 정류소를 찾지 못했어요. 실제 정류소가 없다는 뜻은 아니에요. 지도 검색을 이용해 주세요.');
+   rows=data.stops;render();if(data.snapshot){status(`동탄역 일대 저장 자료 · 반경 800m 내 ${rows.length}곳 · 직선거리순 · ${new Date(data.updatedAt).toLocaleDateString('ko-KR')} 수집. 최신 정보와 다를 수 있어요.`);return;}status(rows.length?`${label} 주변 ${rows.length}곳 · 직선거리순 · ${new Date(data.updatedAt).toLocaleTimeString('ko-KR')} 조회`:'반경 800m에서 지도에 등록된 정류소를 찾지 못했어요. 실제 정류소가 없다는 뜻은 아니에요. 지도 검색을 이용해 주세요.');
   }catch{if(id===generation)status('주변 정류소를 불러오지 못했어요. 잠시 후 다시 시도하거나 지도에서 찾아보세요.');}
   finally{clearTimeout(timer);if(id===generation)el('nearby-panel').removeAttribute('aria-busy');}
  }
@@ -36,7 +36,7 @@ export function setupNearby(){
   if(state.status==='error')status(state.message);
  }});
  el('nearby-me').onclick=()=>locator.locate();
- el('nearby-dongtan').onclick=()=>{locator.clear();search(37.2000,127.0955,'동탄역 중심');};
+ el('nearby-dongtan').onclick=()=>{locator.clear();search(37.2000,127.0955,'동탄역 중심','dongtan');};
  el('nearby-clear').onclick=()=>{locator.clear();reset();status('주변 검색 결과와 위치를 지웠어요.');};
  el('nearby-more').onclick=()=>{shown+=5;render();};
  window.addEventListener('pagehide',()=>{locator.clear();reset();});

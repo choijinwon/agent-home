@@ -11,3 +11,5 @@ try{await copyFile('.openai/hosting.json','dist/.openai/hosting.json');}catch(er
 console.log('Worker and browser assets built');
 
 await copyFile('server/nearby.js','dist/server/nearby.js');
+
+await copyFile('server/nearby-stops.js','dist/server/nearby-stops.js');
