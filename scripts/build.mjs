@@ -7,5 +7,5 @@ for(const name of await readdir('dist')){
 await mkdir('dist/server',{recursive:true});await mkdir('dist/.openai',{recursive:true});
 await writeFile('dist/server/assets.js','export default '+JSON.stringify(assets)+';\n');
 await copyFile('server/worker.js','dist/server/index.js');await copyFile('server/transit.js','dist/server/transit.js');
-await copyFile('.openai/hosting.json','dist/.openai/hosting.json');
+try{await copyFile('.openai/hosting.json','dist/.openai/hosting.json');}catch(error){if(error.code!=='ENOENT')throw error;}
 console.log('Worker and browser assets built');
