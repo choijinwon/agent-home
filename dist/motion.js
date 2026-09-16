@@ -1,18 +1,61 @@
+import {homeBusRoutes,routeForDestination,stopConnections,routeBounds} from './transit-map.js';
 import {places as basePlaces,apartmentBoundary,destinationFor} from './map-places.js';
 export function setupMotionDemo(reducedPreference,onSaveDestination){
  const el=id=>document.getElementById(id),system=matchMedia('(prefers-reduced-motion: reduce)');
  const reduced=()=>reducedPreference()||system.matches;
  let map=null,loading=null,ready=false,timer,loadTimer,touring=false,generation=0,area='aileen',selected=0,pitched=true,markers=[],destination=null,context={},picking=false;
+ let routeMarkers=[],mapLibrary=null,selectedRoute='H2';
  let places=basePlaces.map(p=>({...p,coordinates:[...p.coordinates]}));
  function stopPicking(){picking=false;el('destination-crosshair').hidden=true;el('destination-confirm').hidden=true;el('destination-pick').hidden=false;}
  function updateDestination(){
   destination=destinationFor(context);places[2]=destination?{...destination,id:'home'}:{...basePlaces[2]};
-  el('real-place-home').hidden=!destination;el('real-place-home').textContent='③ '+(destination?.name||'목적지');
+  el('real-place-home').hidden=!destination;el('real-place-home').textContent=(routeForDestination(context)?'④ ':'③ ')+(destination?.name||'목적지');
   el('destination-map-note').textContent=destination?.note||'지도에서 목적지 위치를 직접 지정해 주세요.';
   el('real-map-context').textContent='동탄역 → '+(destination?.name||context.home||'내 목적지');
   if(markers[2]){markers[2].setLngLat(places[2].coordinates);markers[2].getElement().hidden=!destination;markers[2].getElement().setAttribute('aria-label',places[2].name+' 위치 보기');}
+  updateTransitRoute();
   if(ready)for(const id of ['home-area','home-outline'])map.setLayoutProperty(id,'visibility',area==='aileen'&&!destination?.custom?'visible':'none');
  }
+ function selectRoute(id){
+  selectedRoute=id;const route=homeBusRoutes.find(r=>r.id===id)||homeBusRoutes[0];
+  el('transit-route-direction').textContent=route.id+' · '+route.direction;
+  el('transit-route-official').href=route.url;
+  for(const button of document.querySelectorAll('[data-home-route]'))button.setAttribute('aria-pressed',String(button.dataset.homeRoute===route.id));
+ }
+ function focusStop(stop,index){
+  pause();if(!map)return;
+  map.easeTo({center:stop.coordinates,zoom:17,pitch:pitched?45:0,duration:reduced()?0:1000});
+  status((index===0?'승차':index===5?'하차':index+'번째 경유')+' · '+stop.name+' · 정류장 '+stop.number);
+  el('real-map').scrollIntoView({block:'center',behavior:'instant'});
+ }
+ function showAll(){
+  if(!map)return;
+  map.fitBounds(routeBounds(context,destination,places[0].coordinates),{padding:{top:65,bottom:55,left:45,right:45},pitch:0,bearing:0,duration:reduced()?0:900,maxZoom:16});
+  pitched=false;el('real-map-flat').textContent='3D로 보기';el('real-map-flat').setAttribute('aria-pressed','true');
+  status(routeForDestination(context)?selectedRoute+' · 승차부터 하차까지 5개 정류장 이동. 점선은 정류장 연결도이며 실제 도로 경로가 아니에요.':'선택한 출발지와 목적지 위치예요. 이 목적지의 버스 경로는 아직 확인되지 않았어요.');
+ }
+ function updateTransitRoute(){
+  const stops=routeForDestination(context),known=Boolean(stops);
+  el('transit-map-known').hidden=!known;el('transit-map-unavailable').hidden=known;
+  for(const id of ['transit-map-legend','transit-stop-details','transit-alight','transit-map-extras'])el(id).hidden=!known;
+  el('transit-stop-list').replaceChildren();selectRoute(selectedRoute);
+  for(const marker of routeMarkers)marker.remove();routeMarkers=[];
+  if(markers[2])markers[2].getElement().textContent=known?'4':'3';
+  if(markers[1])markers[1].getElement().hidden=!known;
+  document.querySelector('[data-real-place="1"]').hidden=!known;
+  if(ready)map.getSource('bus-stop-connections')?.setData(stopConnections(context));
+  if(!stops)return;
+  stops.forEach((stop,index)=>{
+   const item=document.createElement('li'),button=document.createElement('button'),label=document.createElement('strong'),number=document.createElement('span');
+   button.type='button';label.textContent=(index===0?'승차 · ':index===5?'하차 · ':index+'. ')+stop.name;number.textContent=stop.number;
+   button.append(label,number);button.onclick=()=>focusStop(stop,index);item.append(button);el('transit-stop-list').append(item);
+   if(!mapLibrary||index===0)return;
+   const pin=document.createElement('button');pin.type='button';pin.className=index===5?'real-map-pin pin-alight':'transit-waypoint';pin.textContent=index===5?'3':'•';pin.setAttribute('aria-label',(index===5?'하차 정류장 ':index+'번째 경유 정류장 ')+stop.name+' '+stop.number);pin.onclick=()=>focusStop(stop,index);
+   routeMarkers.push(new mapLibrary.Marker({element:pin,anchor:index===5?'bottom':'center'}).setLngLat(stop.coordinates).addTo(map));
+  });
+ }
+ for(const button of document.querySelectorAll('[data-home-route]'))button.onclick=()=>{pause();selectRoute(button.dataset.homeRoute);showAll();};
+ el('transit-alight').onclick=()=>{const stops=routeForDestination(context);if(stops)focusStop(stops.at(-1),5);};
  const status=text=>el('real-map-status').textContent=text;
  function pause(){generation++;clearTimeout(timer);touring=false;map?.stop();el('real-map-tour').textContent='위치 순서대로 둘러보기';}
  function focus(index){
@@ -30,23 +73,26 @@ export function setupMotionDemo(reducedPreference,onSaveDestination){
   status('실제 도로와 건물 지도를 불러오고 있어요…');loadTimer=setTimeout(fallback,18000);
   loading=(async()=>{
    try{
-    const lib=await import('./maplibre-gl.mjs');
+    const lib=await import('./maplibre-gl.mjs');mapLibrary=lib;
     map=new lib.Map({container:'real-map',style:'https://tiles.openfreemap.org/styles/liberty',center:places[0].coordinates,zoom:16.5,pitch:55,bearing:-18,attributionControl:{compact:true},locale:{'NavigationControl.ZoomIn':'지도 확대','NavigationControl.ZoomOut':'지도 축소','NavigationControl.ResetBearing':'북쪽 기준으로 보기','AttributionControl.ToggleAttribution':'지도 출처 보기'},canvasContextAttributes:{antialias:true}});
     map.addControl(new lib.NavigationControl({visualizePitch:true}),'top-right');
     map.addControl(new lib.ScaleControl({unit:'metric'}),'bottom-left');
     map.getCanvas().setAttribute('aria-label','동탄역 주변 실제 지도. 화살표로 이동하고 더하기와 빼기로 확대하거나 축소하세요.');
     markers=places.map((place,index)=>{
      const button=document.createElement('button');button.type='button';button.className='real-map-pin pin-'+place.id;button.textContent=String(index+1);button.setAttribute('aria-label',place.name+' 위치 보기');button.onclick=()=>{pause();focus(index);};
-     const marker=new lib.Marker({element:button,anchor:'bottom'}).setLngLat(place.coordinates).addTo(map);return marker;
+     const marker=new lib.Marker({element:button,anchor:'bottom',offset:index===0?[-18,-12]:[0,0]}).setLngLat(place.coordinates).addTo(map);return marker;
     });
     updateDestination();
     map.on('load',()=>{
-     ready=true;clearTimeout(loadTimer);el('real-map-fallback').hidden=true;
+     ready=true;clearTimeout(loadTimer);
+     map.addSource('bus-stop-connections',{type:'geojson',data:stopConnections(context)});
+     map.addLayer({id:'bus-stop-connection-outline',type:'line',source:'bus-stop-connections',paint:{'line-color':'#fff','line-width':7,'line-opacity':.85}});
+     map.addLayer({id:'bus-stop-connection-line',type:'line',source:'bus-stop-connections',paint:{'line-color':'#245ea0','line-width':4,'line-dasharray':[2,2]}});el('real-map-fallback').hidden=true;
      map.addSource('home-boundary',{type:'geojson',data:apartmentBoundary});
      map.addLayer({id:'home-area',type:'fill',source:'home-boundary',paint:{'fill-color':'#15856a','fill-opacity':.17},layout:{visibility:area==='aileen'&&!destination?.custom?'visible':'none'}});
      map.addLayer({id:'home-outline',type:'line',source:'home-boundary',paint:{'line-color':'#14775f','line-width':3},layout:{visibility:area==='aileen'&&!destination?.custom?'visible':'none'}});
      status('실제 도로·건물 지도를 불러왔어요. 번호를 누르면 해당 위치로 이동합니다.');
-     el('real-map').setAttribute('aria-busy','false');if(destination)focus(2);
+     el('real-map').setAttribute('aria-busy','false');if(routeForDestination(context))showAll();else if(destination)focus(2);
     });
     map.on('error',()=>{if(!ready)fallback();else status('지도 일부를 불러오지 못했어요. 기본 지도 보기로 확인할 수 있어요.');});
    }catch{fallback();loading=null;}
@@ -54,16 +100,17 @@ export function setupMotionDemo(reducedPreference,onSaveDestination){
  }
  function reset(nextContext={}){
   pause();stopPicking();context=nextContext;area=context.area||'aileen';updateDestination();
-  if(map){map.resize();focus(destination?2:0);}else initialize();
+  if(map){map.resize();if(routeForDestination(context))showAll();else focus(destination?2:0);}else initialize();
  }
  for(const button of document.querySelectorAll('[data-real-place]'))button.onclick=()=>{pause();focus(Number(button.dataset.realPlace));el('real-map').scrollIntoView({block:'center',behavior:'instant'});};
  el('real-map-flat').onclick=()=>{pause();pitched=!pitched;el('real-map-flat').setAttribute('aria-pressed',String(!pitched));el('real-map-flat').textContent=pitched?'평면으로 보기':'3D로 보기';if(map)map.easeTo({pitch:pitched?55:0,duration:reduced()?0:700});};
- el('real-map-all').onclick=()=>{pause();if(!map)return;if(destination)map.fitBounds([places[0].coordinates,places[2].coordinates],{padding:45,pitch:pitched?40:0,bearing:0,duration:reduced()?0:1000});else focus(0);status('전체 위치를 보고 있어요. 선으로 연결된 버스 경로는 아직 제공하지 않아요.');};
+ el('real-map-all').onclick=()=>{pause();showAll();};
  el('real-map-tour').onclick=async()=>{
   if(touring){pause();return;}stopPicking();await initialize();if(!map||!el('map-dialog').open)return;
-  if(reduced()){focus((selected+1)%(destination?3:2));return;}
+  const tour=routeForDestination(context)?[0,1,3,2]:(destination?[0,2]:[0]);
+  if(reduced()){const step=tour[(tour.indexOf(selected)+1)%tour.length];if(step===3){const stops=routeForDestination(context);focusStop(stops.at(-1),5);selected=3;}else focus(step);return;}
   touring=true;const id=++generation;el('real-map-tour').textContent='둘러보기 멈추기';let i=0;
-  function next(){if(id!==generation)return;focus(i++);if(i<(destination?3:2))timer=setTimeout(next,3500);else timer=setTimeout(pause,1600);}next();
+  function next(){if(id!==generation)return;const step=tour[i++];if(step===3){selected=3;map.easeTo({center:routeForDestination(context).at(-1).coordinates,zoom:17,pitch:pitched?55:0,duration:1400});status('③ 하차 · 에일린의뜰.중흥S클래스 55405');}else focus(step);if(i<tour.length)timer=setTimeout(next,3500);else timer=setTimeout(pause,1600);}next();
  };
  el('destination-pick').onclick=async()=>{pause();await initialize();if(!map)return;picking=true;map.easeTo({pitch:0,duration:0});pitched=false;el('real-map-flat').textContent='3D로 보기';el('real-map-flat').setAttribute('aria-pressed','true');el('destination-crosshair').hidden=false;el('destination-confirm').hidden=false;el('destination-pick').hidden=true;el('real-map').scrollIntoView({block:'center',behavior:'instant'});status('지도를 움직여 가운데 십자표시를 목적지에 맞춘 뒤 저장하세요.');};
  el('destination-cancel-pin').onclick=()=>{stopPicking();status('목적지 위치 지정을 취소했어요.');};
