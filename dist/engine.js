@@ -1,0 +1,6 @@
+export const areas={lake:{name:'동탄호수공원',routes:[['A1',6,3,19,5,'동쪽 승차장 A'],['A2',10,5,16,7,'서쪽 승차장 B'],['A3',3,4,22,3,'동쪽 승차장 A']]},central:{name:'센트럴파크',routes:[['B1',7,4,23,4,'서쪽 승차장 B'],['B2',11,3,18,8,'동쪽 승차장 A'],['B3',5,5,25,3,'서쪽 승차장 C']]},yeongcheon:{name:'영천동',routes:[['C1',5,3,12,6,'동쪽 승차장 A'],['C2',9,4,10,4,'동쪽 승차장 D'],['C3',4,4,15,3,'서쪽 승차장 B']]}};
+export function getRoutes(settings,elapsed=0,missed=[]){
+ const area=areas[settings.area];if(!area)return [];
+ return area.routes.map(([id,eta,walk,ride,homeWalk,platform])=>({id,eta:eta-elapsed,walk:walk+Number(settings.access),ride,homeWalk,platform,stop:area.name+' 예시 정류장'})).filter(r=>r.eta>=r.walk+1&&r.homeWalk<=Number(settings.walk)&&!missed.includes(r.id)).map(r=>({...r,total:r.eta+r.ride+r.homeWalk})).sort((a,b)=>a.total-b.total||a.eta-b.eta);
+}
+export function parseSettings(value){if(!value||typeof value.home!=='string'||!value.home.trim()||value.home.length>50||!['lake','central','yeongcheon','aileen','other'].includes(value.area)||!Number.isInteger(Number(value.walk))||Number(value.walk)<3||Number(value.walk)>20||![0,2,5].includes(Number(value.access)))return null;return{home:value.home.trim(),area:value.area,walk:Number(value.walk),access:Number(value.access)};}
