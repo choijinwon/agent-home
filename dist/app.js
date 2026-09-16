@@ -1,10 +1,12 @@
 import {getRoutes,parseSettings} from './engine.js';
+import {createLocationController,mapLinks} from './location.js';
+let stationMinutes=0;
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let settings={home:'우리 집',area:'lake',walk:10,access:0},elapsed=0,missed=[],alarm=false,notified=new Set(),toastTimer;
 try{settings=parseSettings(JSON.parse(localStorage.getItem('homebus-settings')))||settings;}catch{}
 function toast(text){$('#toast').textContent=text;$('#toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').hidden=true,7000);}
 function loadForm(){for(const key of ['home','area','walk','access'])$('#'+key).value=settings[key];$('#walk-value').textContent=settings.walk+'분';}
-function routes(){return getRoutes(settings,elapsed,missed)}
+function routes(){return getRoutes(settings,elapsed,missed,stationMinutes)}
 function clock(min){return `${String(19+Math.floor(min/60)).padStart(2,'0')}:${String(min%60).padStart(2,'0')}`;}
 function notify(text){toast(text);if('Notification'in window&&Notification.permission==='granted'){try{new Notification('집으로 · 시연 알림',{body:text,tag:'homebus-demo'});}catch{}}}
 function checkAlarm(){const r=routes()[0];if(alarm&&r&&r.eta-r.walk<=Number($('#lead').value)&&!notified.has(r.id)){notified.add(r.id);notify(`시연: ${r.id} 버스까지 ${r.eta}분, ${r.platform}까지 도보 ${r.walk}분이에요. 지금 이동하세요.`);}}
@@ -21,3 +23,30 @@ $('#alarm-toggle').onclick=async()=>{alarm=!alarm;$('#alarm-toggle').setAttribut
 $('#test-alarm').onclick=()=>{const r=routes()[0];notify(r?`[알림 체험] ${r.id} 버스의 ${r.platform}까지 도보 ${r.walk}분이에요. 실제 운행 알림이 아닙니다.`:'[알림 체험] 목적지에 맞는 버스를 선택하면 출발할 시간을 알려드려요.');};$('#lead').onchange=checkAlarm;
 loadForm();render();
 if(document.modelContext?.registerTool){const lifecycle=new AbortController();for(const tool of [{name:'read_bus_recommendations',description:'Read simulated bus recommendations for the current destination.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true},execute:()=>({mode:'simulation',settings,routes:routes()})},{name:'configure_commute',description:'Save device-local destination preferences and reset simulated bus time to 19:00.',inputSchema:{type:'object',properties:{home:{type:'string',maxLength:50},area:{type:'string',enum:['lake','central','yeongcheon','aileen','other']},walk:{type:'integer',minimum:3,maximum:20},access:{type:'integer',enum:[0,2,5]}},required:['home','area','walk','access'],additionalProperties:false},annotations:{readOnlyHint:false},execute:input=>({settings:save(input),mode:'simulation',routes:routes()})}]){try{Promise.resolve(document.modelContext.registerTool(tool,{signal:lifecycle.signal})).catch(()=>{});}catch{}}window.addEventListener('pagehide',()=>lifecycle.abort(),{once:true});}
+
+let currentPosition=null;
+const locationController=createLocationController({geolocation:navigator.geolocation,secure:window.isSecureContext,onChange(state){
+ currentPosition=state.position;
+ $('#locate').disabled=state.status==='loading';
+ $('#locate').textContent=state.status==='loading'?'위치 확인 중…':'◎ 내 위치 다시 확인';
+ $('#location-result').hidden=true;
+ $('#location-map').removeAttribute('href');$('#location-walk').removeAttribute('href');
+ if(state.status==='success'){
+   const p=state.position,links=mapLinks(p);
+   $('#location-status').textContent=p.accuracy>100?'위치를 확인했지만 오차가 커요. 지도에서 실제 위치를 확인하세요.':'현재 위치를 확인했어요. 이동했다면 다시 확인해 주세요.';
+   $('#location-coordinates').textContent=`위도 ${p.latitude.toFixed(5)} · 경도 ${p.longitude.toFixed(5)} · 정확도 약 ${Math.round(p.accuracy)}m · ${new Date(p.timestamp).toLocaleTimeString('ko-KR')} 확인`;
+   if(links){$('#location-map').href=links.map;$('#location-walk').href=links.walk;$('#location-result').hidden=false;}
+ }else{$('#location-coordinates').textContent='';$('#location-status').textContent=state.status==='loading'?'기기의 현재 위치를 확인하고 있어요. 최대 16초가 걸릴 수 있어요.':state.message||'위치 정보를 지웠어요. 아래에서 출발 위치를 직접 선택할 수 있어요.';}
+}});
+$('#locate').onclick=()=>locationController.locate();
+$('#clear-location').onclick=()=>locationController.clear();
+for(const id of ['location-map','location-walk'])$('#'+id).addEventListener('click',e=>{if(!mapLinks(currentPosition)){e.preventDefault();locationController.clear();$('#location-status').textContent='위치를 확인한 지 5분이 지났어요. 내 위치를 다시 확인해 주세요.';}});
+function applyOrigin(){
+ const nearby=$('#origin-mode').value==='nearby';
+ const value=nearby?Number($('#station-minutes').value):0;
+ if(nearby&&($('#station-minutes').value.trim()===''||!Number.isInteger(value)||value<0||value>120)){$('#origin-status').textContent='이동 시간은 0~120분의 정수로 입력해 주세요.';return;}
+ stationMinutes=value;notified.clear();render();$('#origin-status').textContent=nearby?`직접 입력한 ${value}분을 동탄역에서 시연 승차장까지의 도보 시간에 더해 추천해요. GPS로 자동 계산한 시간이 아니에요.`:'동탄역에서 출발하는 조건으로 추천해요.';
+}
+$('#origin-mode').onchange=()=>{$('#station-minutes-wrap').hidden=$('#origin-mode').value!=='nearby';applyOrigin();};
+$('#apply-origin').onclick=applyOrigin;
+window.addEventListener('pagehide',()=>locationController.clear());
