@@ -1,3 +1,4 @@
+import {setupNearby} from './nearby.js';
 import {setupCommute} from './commute.js';
 import {setupMotionDemo} from './motion.js';
 import {getRoutes,parseSettings} from './engine.js';
@@ -244,3 +245,7 @@ function renderBoarding(){
 $('#boarding-walk').addEventListener('click',()=>renderBoarding());
 
 commute=setupCommute({getContext:()=>({destination:settings.home,stepFree:accessPrefs.stepFree}),openMap:()=>$('#open-map').click(),speak:speakAnswer,notify,applyNeeds:needs=>{accessPrefs={...accessPrefs,...needs};try{localStorage.setItem('homebus-access',JSON.stringify(accessPrefs));}catch{}applyAccess();}});
+
+setupNearby();
+
+$('#open-nearby').onclick=()=>{activateView('location');$('#nearby-me').focus();};

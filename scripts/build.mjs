@@ -9,3 +9,5 @@ await writeFile('dist/server/assets.js','export default '+JSON.stringify(assets)
 await copyFile('server/worker.js','dist/server/index.js');await copyFile('server/transit.js','dist/server/transit.js');
 try{await copyFile('.openai/hosting.json','dist/.openai/hosting.json');}catch(error){if(error.code!=='ENOENT')throw error;}
 console.log('Worker and browser assets built');
+
+await copyFile('server/nearby.js','dist/server/nearby.js');

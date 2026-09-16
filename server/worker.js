@@ -1,9 +1,11 @@
+import {nearbyResponse} from './nearby.js';
 import assets from './assets.js';
 import {normalizeArrivals} from './transit.js';
 let cached=null,pending=null;
 const json=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 export default {async fetch(request,env={}){
  const url=new URL(request.url);
+ if(url.pathname==='/api/nearby-stops')return nearbyResponse(request);
  if(url.pathname==='/api/arrivals'){
   if(request.method!=='GET')return json({error:'method'},405);
   if(!env.GBIS_SERVICE_KEY)return json({error:'not_configured',message:'실시간 도착정보 연결 준비 중입니다.'},503);
