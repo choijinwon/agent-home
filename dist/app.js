@@ -1,5 +1,7 @@
 import {getRoutes,parseSettings} from './engine.js';
 import {createLocationController,mapLinks} from './location.js';
+import {interpretQuestion,makeGuidance,createSpeaker,createListener} from './voice.js';
+let voiceGuide=null,voiceRefresh=null;
 let stationMinutes=0;
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let settings={home:'우리 집',area:'lake',walk:10,access:0},elapsed=0,missed=[],alarm=false,notified=new Set(),toastTimer;
@@ -8,9 +10,9 @@ function toast(text){$('#toast').textContent=text;$('#toast').hidden=false;clear
 function loadForm(){for(const key of ['home','area','walk','access'])$('#'+key).value=settings[key];$('#walk-value').textContent=settings.walk+'분';}
 function routes(){return getRoutes(settings,elapsed,missed,stationMinutes)}
 function clock(min){return `${String(19+Math.floor(min/60)).padStart(2,'0')}:${String(min%60).padStart(2,'0')}`;}
-function notify(text){toast(text);if('Notification'in window&&Notification.permission==='granted'){try{new Notification('집으로 · 시연 알림',{body:text,tag:'homebus-demo'});}catch{}}}
+function notify(text){toast(text);if(voiceGuide&&$('#voice-alerts').checked)voiceGuide(text);if('Notification'in window&&Notification.permission==='granted'){try{new Notification('집으로 · 시연 알림',{body:text,tag:'homebus-demo'});}catch{}}}
 function checkAlarm(){const r=routes()[0];if(alarm&&r&&r.eta-r.walk<=Number($('#lead').value)&&!notified.has(r.id)){notified.add(r.id);notify(`시연: ${r.id} 버스까지 ${r.eta}분, ${r.platform}까지 도보 ${r.walk}분이에요. 지금 이동하세요.`);}}
-function render(){const list=routes(),r=list[0];const reference=settings.area==='aileen';$('.simulation').hidden=reference;$('.alternatives').hidden=reference;$('#alarm-toggle').disabled=reference;if(reference){alarm=false;$('#alarm-toggle').setAttribute('aria-pressed','false');$('#alarm-toggle').textContent='알림 켜기';$('#alarm-status').textContent='이 경로는 실시간 도착 정보가 없어 출발 알림을 켤 수 없어요. 알림 체험만 가능합니다.';}else if(!alarm){$('#alarm-status').textContent='알림은 이 페이지가 열려 있을 때 작동해요. 화면 잠금·종료 후 알림은 지원하지 않아요.';}$('#home-title').textContent=settings.home;$('#sim-time').textContent=clock(elapsed);$('#advance').disabled=elapsed>=60;$('#route-count').textContent=`${Math.max(list.length-1,0)}개 대안`;$('#recommendation').innerHTML=settings.area==='aileen'?`<article class="panel"><span class="badge">확인된 교통편 · 실시간 정보 없음</span><h2 style="margin-top:20px">동탄역 → 동탄역 에일린의뜰</h2><p>동탄기흥로353번길 77</p><div class="route-row"><div class="route-label"><strong>206 · H2</strong><span>에일린의뜰 정류장 하차 후보</span></div></div><p class="dialog-note">경기도교육청의 2025년 11월 이산고등학교 교통편 안내에서 확인한 구간이에요. 현재 운행 여부, 승차 방향과 정확한 정류장 위치는 추가 확인이 필요해요.</p><p class="dialog-note">도착 정보가 연결되지 않아 지금 탈 버스의 순위와 출발 알림은 제공하지 않아요. 왼쪽에서 다른 시연 경로를 선택하면 추천·알림을 체험할 수 있어요.</p><a class="text-button" href="https://www.goe.go.kr/resource/goe/na/bbs_2583/2025/11/67978b1b-2671-4dd5-97f2-b5a76c89f77d.pdf" target="_blank" rel="noopener noreferrer">교육청 교통편 안내 원문 ↗</a></article>`:r?`<article class="recommend"><div class="recommend-top"><span class="badge">가장 빨리 집에 도착</span><span>가상 노선 · 도보 1분 안전 여유</span></div><div class="recommend-main"><div class="bus-name">${r.id}<small>시연 버스</small></div><div class="arrival"><strong>${r.eta}분 후</strong><p>버스 도착 예정</p></div></div><div class="trip-stats"><div>승차장까지<strong>도보 ${r.walk}분</strong></div><div>버스 이동<strong>${r.ride}분</strong></div><div>하차 후 집까지<strong>도보 ${r.homeWalk}분</strong></div><div>집 도착<strong>${clock(elapsed+r.total)}</strong></div></div><p class="departure">${r.eta-r.walk-1<=0?'지금 출발하세요.':`${r.eta-r.walk-1}분 안에 출발하세요.`} <span style="color:#b8cdbd">${r.platform}</span></p><div class="recommend-actions"><button data-detail="${r.id}">승차 위치 · 경로 보기 ↗</button><button id="missed">이 버스를 놓쳤어요</button></div></article>`:`<div class="empty"><h3>${settings.area==='other'?'아직 시연 경로가 없는 지역이에요':'지금 조건에 맞는 버스가 없어요'}</h3><p>${settings.area==='other'?'목적지 이름은 자유롭게 저장할 수 있어요. 현재는 세 지역의 가상 경로를 체험할 수 있으며 실제 지역 검색·환승 경로는 아직 연결되지 않았어요.':'최대 도보 시간을 늘리거나 시연을 초기화해 다른 버스를 확인하세요. 다음 운행 정보는 이 데모에서 제공하지 않아요.'}</p><button class="secondary" id="empty-reset">시연 초기화</button></div>`;
+function render(){voiceRefresh?.();const list=routes(),r=list[0];const reference=settings.area==='aileen';$('.simulation').hidden=reference;$('.alternatives').hidden=reference;$('#alarm-toggle').disabled=reference;if(reference){alarm=false;$('#alarm-toggle').setAttribute('aria-pressed','false');$('#alarm-toggle').textContent='알림 켜기';$('#alarm-status').textContent='이 경로는 실시간 도착 정보가 없어 출발 알림을 켤 수 없어요. 알림 체험만 가능합니다.';}else if(!alarm){$('#alarm-status').textContent='알림은 이 페이지가 열려 있을 때 작동해요. 화면 잠금·종료 후 알림은 지원하지 않아요.';}$('#home-title').textContent=settings.home;$('#sim-time').textContent=clock(elapsed);$('#advance').disabled=elapsed>=60;$('#route-count').textContent=`${Math.max(list.length-1,0)}개 대안`;$('#recommendation').innerHTML=settings.area==='aileen'?`<article class="panel"><span class="badge">확인된 교통편 · 실시간 정보 없음</span><h2 style="margin-top:20px">동탄역 → 동탄역 에일린의뜰</h2><p>동탄기흥로353번길 77</p><div class="route-row"><div class="route-label"><strong>206 · H2</strong><span>에일린의뜰 정류장 하차 후보</span></div></div><p class="dialog-note">경기도교육청의 2025년 11월 이산고등학교 교통편 안내에서 확인한 구간이에요. 현재 운행 여부, 승차 방향과 정확한 정류장 위치는 추가 확인이 필요해요.</p><p class="dialog-note">도착 정보가 연결되지 않아 지금 탈 버스의 순위와 출발 알림은 제공하지 않아요. 왼쪽에서 다른 시연 경로를 선택하면 추천·알림을 체험할 수 있어요.</p><a class="text-button" href="https://www.goe.go.kr/resource/goe/na/bbs_2583/2025/11/67978b1b-2671-4dd5-97f2-b5a76c89f77d.pdf" target="_blank" rel="noopener noreferrer">교육청 교통편 안내 원문 ↗</a></article>`:r?`<article class="recommend"><div class="recommend-top"><span class="badge">가장 빨리 집에 도착</span><span>가상 노선 · 도보 1분 안전 여유</span></div><div class="recommend-main"><div class="bus-name">${r.id}<small>시연 버스</small></div><div class="arrival"><strong>${r.eta}분 후</strong><p>버스 도착 예정</p></div></div><div class="trip-stats"><div>승차장까지<strong>도보 ${r.walk}분</strong></div><div>버스 이동<strong>${r.ride}분</strong></div><div>하차 후 집까지<strong>도보 ${r.homeWalk}분</strong></div><div>집 도착<strong>${clock(elapsed+r.total)}</strong></div></div><p class="departure">${r.eta-r.walk-1<=0?'지금 출발하세요.':`${r.eta-r.walk-1}분 안에 출발하세요.`} <span style="color:#b8cdbd">${r.platform}</span></p><div class="recommend-actions"><button data-detail="${r.id}">승차 위치 · 경로 보기 ↗</button><button id="missed">이 버스를 놓쳤어요</button></div></article>`:`<div class="empty"><h3>${settings.area==='other'?'아직 시연 경로가 없는 지역이에요':'지금 조건에 맞는 버스가 없어요'}</h3><p>${settings.area==='other'?'목적지 이름은 자유롭게 저장할 수 있어요. 현재는 세 지역의 가상 경로를 체험할 수 있으며 실제 지역 검색·환승 경로는 아직 연결되지 않았어요.':'최대 도보 시간을 늘리거나 시연을 초기화해 다른 버스를 확인하세요. 다음 운행 정보는 이 데모에서 제공하지 않아요.'}</p><button class="secondary" id="empty-reset">시연 초기화</button></div>`;
 $('#route-list').innerHTML=list.slice(1).map(x=>`<article class="route-row"><div class="route-label"><strong>${x.id}</strong><span>${x.platform} · 도보 ${x.walk}분</span></div><div class="route-timing"><strong>${x.eta}분 후 도착</strong><span>집 도착 ${clock(elapsed+x.total)} · 총 ${x.total}분</span></div><button data-detail="${x.id}" aria-label="${x.id} 경로 상세 보기">↗</button></article>`).join('')||'<p class="small">조건에 맞는 다른 버스가 없어요.</p>';checkAlarm();}
 function reset(){elapsed=0;missed=[];notified.clear();render();toast('시연 시간을 19:00으로 되돌렸어요.');}
 function save(input){const parsed=parseSettings(input);if(!parsed)throw new Error('목적지와 이동 조건을 확인해 주세요.');settings=parsed;elapsed=0;missed=[];notified.clear();loadForm();let saved=true;try{localStorage.setItem('homebus-settings',JSON.stringify(settings));}catch{saved=false;}$('#save-status').textContent=saved?'저장했어요. 다음 방문에도 이 기기에서 기억해요.':'현재 화면에 적용했어요. 이 브라우저에서는 저장할 수 없어요.';render();return settings;}
@@ -50,3 +52,48 @@ function applyOrigin(){
 $('#origin-mode').onchange=()=>{$('#station-minutes-wrap').hidden=$('#origin-mode').value!=='nearby';applyOrigin();};
 $('#apply-origin').onclick=applyOrigin;
 window.addEventListener('pagehide',()=>locationController.clear());
+
+// Voice UI reads only route state, never raw coordinates or private transcripts.
+let pendingVoiceAction=null,lastVoiceIntent='recommend',listening=false;
+const voiceStatus=text=>$('#voice-status').textContent=text;
+const speaker=createSpeaker({synthesis:window.speechSynthesis,Utterance:window.SpeechSynthesisUtterance,onStatus:voiceStatus});
+const listener=createListener({Recognition:window.SpeechRecognition||window.webkitSpeechRecognition,onStatus:voiceStatus,onListening(value){listening=value;$('#voice-mic').setAttribute('aria-pressed',String(value));$('#voice-mic').textContent=value?'● 듣는 중 · 누르면 취소':'● 말로 물어보기';},onText(text){$('#voice-transcript').hidden=false;$('#voice-transcript').textContent='이렇게 들었어요: '+text;answerVoice(interpretQuestion(text));}});
+function speakAnswer(text){listener.cancel();$('#voice-answer').textContent=text;speaker.speak(text,Number($('#voice-rate').value));}
+voiceGuide=speakAnswer;
+function closeVoiceConfirmation(){pendingVoiceAction=null;$('#voice-confirm').hidden=true;}
+function currentGuidance(intent=lastVoiceIntent){return makeGuidance(intent,{area:settings.area,routes:routes()});}
+function answerVoice(intent){
+ listener.cancel();
+ if(intent==='stop'){closeVoiceConfirmation();speaker.stop();return;}
+ if(intent==='repeat'){if(pendingVoiceAction){speakAnswer($('#voice-confirm-text').textContent);return;}speakAnswer(currentGuidance());return;}
+ if(intent==='slow'){$('#voice-rate').value='0.7';speakAnswer(pendingVoiceAction?$('#voice-confirm-text').textContent:currentGuidance());return;}
+ closeVoiceConfirmation();
+ if(intent==='missed'||intent==='aileen'){
+   const r=routes()[0];if(intent==='missed'&&!r){speakAnswer(currentGuidance('recommend'));return;}
+   pendingVoiceAction={intent,routeId:r?.id};
+   const text=intent==='missed'?`시연 버스 ${r.id}를 놓치셨나요? 다음 버스를 보려면 아래의 네, 변경해 주세요 버튼을 눌러 주세요.`:'목적지를 동탄역 에일린의뜰로 바꿀까요? 아래의 네, 변경해 주세요 버튼을 눌러 주세요.';
+   $('#voice-confirm-text').textContent=text;$('#voice-confirm').hidden=false;speakAnswer(text);$('#voice-confirm-yes').focus();return;
+ }
+ lastVoiceIntent=intent;speakAnswer(currentGuidance(intent));
+}
+voiceRefresh=()=>{listener.cancel();speaker.stop();closeVoiceConfirmation();$('#voice-answer').textContent='이동 조건이 바뀌었어요. 버스 안내 듣기를 눌러 새로운 안내를 확인해 주세요.';voiceStatus('이동 조건에 맞춰 안내를 갱신했어요.');};
+$('#voice-read').onclick=()=>answerVoice('recommend');
+$('#voice-repeat').onclick=()=>answerVoice('repeat');
+$('#voice-stop').onclick=()=>{listener.cancel();closeVoiceConfirmation();speaker.stop();};
+$('#voice-mic').onclick=()=>{speaker.stop();if(listening){listener.cancel();voiceStatus('마이크를 껐어요.');}else{closeVoiceConfirmation();listener.start();}};
+for(const button of document.querySelectorAll('[data-question]'))button.onclick=()=>answerVoice(button.dataset.question);
+$('#voice-confirm-no').onclick=()=>{closeVoiceConfirmation();speakAnswer('취소했어요. 기존 설정을 유지합니다.');$('#voice-read').focus();};
+$('#voice-confirm-yes').onclick=()=>{
+ const action=pendingVoiceAction;closeVoiceConfirmation();if(!action)return;
+ if(action.intent==='aileen')save({...settings,area:'aileen',home:'동탄역 에일린의뜰'});
+ else if(routes()[0]?.id===action.routeId){missed.push(action.routeId);render();}
+ else{speaker.stop();voiceStatus('추천 버스가 바뀌었어요. 다시 확인해 주세요.');return;}
+ lastVoiceIntent='recommend';speakAnswer(currentGuidance());$('#voice-read').focus();
+};
+$('#voice-rate').onchange=()=>speaker.stop();
+let senior=true;try{senior=localStorage.getItem('homebus-large-text')!=='false';}catch{}
+function applySenior(){document.body.classList.toggle('senior-mode',senior);$('#senior-toggle').setAttribute('aria-pressed',String(senior));$('#senior-toggle').textContent=senior?'큰 글씨 켜짐':'큰 글씨 켜기';}
+applySenior();$('#senior-toggle').onclick=()=>{senior=!senior;applySenior();try{localStorage.setItem('homebus-large-text',String(senior));}catch{}};
+if(!(window.SpeechRecognition||window.webkitSpeechRecognition)){$('#voice-mic').disabled=true;voiceStatus('이 브라우저에서는 말로 묻기를 지원하지 않아요. 안내 듣기와 질문 버튼을 이용해 주세요.');}
+const stopVoice=()=>{listener.cancel();speaker.stop();};
+window.addEventListener('pagehide',stopVoice);document.addEventListener('visibilitychange',()=>{if(document.hidden)stopVoice();});

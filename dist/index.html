@@ -2,7 +2,18 @@
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#153d35"><meta name="description" content="동탄역에서 집으로. 도보 시간까지 고려한 귀가 버스 추천 시연 서비스."><title>집으로 · 동탄역 귀가 버스</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23153d35'/%3E%3Cpath d='M7 16 16 8l9 8v10H7z' fill='%23d5f47c'/%3E%3Cpath d='M14 19h4v7h-4z' fill='%23153d35'/%3E%3C/svg%3E"><link rel="stylesheet" href="/style.css"><script type="module" src="/app.js"></script></head>
 <body><header class="top"><a class="brand" href="/" aria-label="집으로 홈"><span class="brand-icon">⌂</span> 집으로<span class="brand-sub">동탄역 귀가 가이드</span></a><span class="demo-pill">DEMO · 시연 모드</span></header>
 <main><div class="heading"><div><div class="eyebrow">DONGTAN STATION → HOME</div><h1>오늘도, 편하게 집으로.</h1><p>어느 버스를 탈지, 언제 움직일지 한눈에.</p></div><div class="station"><span>출발</span><strong>동탄역</strong><span>목적지는 나에게 맞게</span></div></div>
-<section class="panel location-panel" aria-labelledby="location-title">
+<section class="voice-panel" aria-labelledby="voice-title">
+<div class="voice-heading"><div><span class="eyebrow">함께 가는 귀갓길</span><h2 id="voice-title">글씨가 작고 복잡하다면,<br>말로 안내해 드릴게요.</h2></div><button id="senior-toggle" type="button" aria-pressed="true">큰 글씨 켜짐</button></div>
+<div class="voice-main-actions"><button id="voice-read" type="button">▶ 버스 안내 듣기</button><button id="voice-mic" type="button" aria-pressed="false" aria-describedby="mic-disclosure">● 말로 물어보기</button><button id="voice-stop" type="button">■ 멈추기</button></div>
+<p class="voice-privacy">마이크는 버튼을 누를 때만 켜져요. 음성은 브라우저 제공업체에서 처리될 수 있어요.</p>
+<p id="voice-status" role="status">안내 듣기를 누르면 천천히 읽어 드려요.</p>
+<div id="voice-answer" class="voice-answer" aria-label="음성 안내 내용">어떤 버스를 타야 할지 궁금하신가요? 아래 질문을 눌러 주세요. 말하지 않아도 됩니다.</div>
+<p id="voice-transcript" hidden></p>
+<div class="voice-questions"><button type="button" data-question="recommend">어떤 버스를 타요?</button><button type="button" data-question="arrival">언제 오나요?</button><button type="button" data-question="platform">어디에서 타요?</button><button type="button" data-question="missed">버스를 놓쳤어요</button><button type="button" data-question="aileen">에일린의뜰로 가요</button><button id="voice-repeat" type="button">다시 들려주세요</button></div>
+<div id="voice-confirm" hidden><p id="voice-confirm-text"></p><button id="voice-confirm-yes" type="button">네, 변경해 주세요</button><button id="voice-confirm-no" type="button">아니요, 취소</button></div>
+<div class="voice-options"><label for="voice-rate">읽는 속도</label><select id="voice-rate"><option value="0.7">아주 천천히</option><option value="0.85" selected>천천히</option><option value="1">보통</option></select><label class="voice-check"><input type="checkbox" id="voice-alerts"> 시연 알림도 소리로 듣기</label></div>
+<details><summary>마이크 사용과 음성 안내 알아보기</summary><p id="mic-disclosure">말로 물어보기를 누르면 마이크 사용 권한을 요청해요. 브라우저에 따라 음성이 음성 인식 제공업체 서버에서 처리될 수 있어요. 이 서비스는 녹음과 대화 기록을 저장하지 않아요. 화면이 닫히면 음성 안내도 종료돼요. 정해진 귀가 질문을 지원하며 자유로운 AI 대화는 아직 연결되지 않았어요.</p></details>
+</section><section class="panel location-panel" aria-labelledby="location-title">
 <div class="section-top"><div><div class="eyebrow">MY LOCATION</div><h2 id="location-title">지금 어디에서 출발하나요?</h2></div><span>기기 위치</span></div>
 <div class="location-actions"><button id="locate" class="primary" type="button">◎ 내 위치 확인</button><button id="clear-location" class="text-button" type="button">위치 지우기 · 취소</button></div>
 <p id="location-status" role="status">버튼을 누르면 브라우저에서 위치 권한을 요청해요.</p>
