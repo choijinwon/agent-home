@@ -124,6 +124,7 @@ function applyAccess(){
  $('#voice-repeat').textContent=canSpeak(accessPrefs)?'다시 들려주세요':'안내 다시 보기';
  for(const key of ['contrast','textOnly','screenReader','reduceMotion','vibration','stepFree'])$('#access-'+key).checked=accessPrefs[key];
  $('#access-textSize').value=accessPrefs.textSize;
+ syncSimplePreferences();
 }
 function updateAccess(){
  accessPrefs=parseAccess(Object.fromEntries([...['contrast','textOnly','screenReader','reduceMotion','vibration','stepFree'].map(k=>[k,$('#access-'+k).checked]),['textSize',$('#access-textSize').value]]));
@@ -132,7 +133,7 @@ function updateAccess(){
 }
 for(const control of document.querySelectorAll('#a11y-settings input,#a11y-settings select'))control.addEventListener('change',updateAccess);
 $('#text-question-form').onsubmit=e=>{e.preventDefault();const text=$('#text-question').value.trim();if(!text){$('#text-question').focus();return;}$('#voice-transcript').hidden=false;$('#voice-transcript').textContent='질문: '+text;if(!commute?.handleText(text))answerVoice(interpretQuestion(text));};
-for(const link of document.querySelectorAll('.skip-links a'))link.addEventListener('click',e=>{e.preventDefault();const target=link.getAttribute('href');if(target==='#recommendation')activateView('route');if(target==='#a11y-settings')activateView('settings');document.querySelector(target).focus();});
+for(const link of document.querySelectorAll('.skip-links a'))link.addEventListener('click',e=>{e.preventDefault();const target=link.getAttribute('href');if(target==='#commute-result')activateView('route');if(target==='#a11y-settings')activateView('settings');(target==='#commute-result'&&!$('#commute-stage').hidden?$('#commute-stage-title'):document.querySelector(target)).focus();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){const confirmationFocused=$('#voice-confirm').contains(document.activeElement);stopVoice();closeVoiceConfirmation();if(confirmationFocused)$('#voice-read').focus();}});
 applyAccess();render();
 
@@ -249,3 +250,28 @@ commute=setupCommute({getContext:()=>({destination:settings.home,stepFree:access
 setupNearby();
 
 $('#open-nearby').onclick=()=>{activateView('location');$('#nearby-me').focus();};
+
+function syncSimplePreferences(){
+ $('#simple-large').setAttribute('aria-pressed',String(accessPrefs.textSize!=='normal'));
+ $('#simple-text').setAttribute('aria-pressed',String(!canSpeak(accessPrefs)));
+ $('#simple-sound').setAttribute('aria-pressed',String(canSpeak(accessPrefs)));
+ $('#simple-slow').setAttribute('aria-pressed',String($('#commute-pace').value==='slow'));
+}
+$('#home-edit').onclick=()=>{activateView('settings');$('#home').focus();};
+$('#home-preferences').onclick=()=>{syncSimplePreferences();activateView('settings');$('#simple-preferences-title').focus();};
+$('#home-voice').onclick=()=>{activateView('voice');($('#voice-mic').disabled?$('#text-question'):$('#voice-mic')).focus();};
+$('#preferences-home').onclick=()=>{activateView('route');$('#commute-result').focus();};
+$('#simple-large').onclick=()=>{$('#access-textSize').value=accessPrefs.textSize==='normal'?'large':'normal';updateAccess();$('#simple-preferences-status').textContent=accessPrefs.textSize==='normal'?'기본 글씨로 바꿨어요.':'큰 글씨로 바꿨어요.';};
+function chooseSimpleAudio(textOnly){
+ $('#access-textOnly').checked=textOnly;
+ if(!textOnly)$('#access-screenReader').checked=false;
+ updateAccess();$('#simple-preferences-status').textContent=textOnly?'소리를 끄고 글로 안내해요.':'안내 듣기 버튼을 누르면 소리로 안내해요.';
+}
+$('#simple-text').onclick=()=>chooseSimpleAudio(true);
+$('#simple-sound').onclick=()=>chooseSimpleAudio(false);
+$('#simple-slow').onclick=()=>{
+ const slow=$('#commute-pace').value!=='slow';commute.setPace(slow?'slow':'normal');syncSimplePreferences();
+ $('#simple-preferences-status').textContent=slow?'천천히 걷는 조건을 시연 추천에 반영했어요.':'보통 걷는 속도로 시연 추천을 바꿨어요.';
+};
+$('#commute-options').addEventListener('submit',syncSimplePreferences);
+syncSimplePreferences();
