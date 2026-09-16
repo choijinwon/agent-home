@@ -1,3 +1,4 @@
+import {setupMotionDemo} from './motion.js';
 import {getRoutes,parseSettings} from './engine.js';
 import {createLocationController,mapLinks} from './location.js';
 import {interpretQuestion,makeGuidance,createSpeaker,createListener} from './voice.js';
@@ -210,6 +211,7 @@ function updateMobileNavSpace(){
 if('ResizeObserver' in window){const navObserver=new ResizeObserver(updateMobileNavSpace);navObserver.observe($('.app-tabs'));}
 window.addEventListener('resize',updateMobileNavSpace);updateMobileNavSpace();
 
+const motionDemo=setupMotionDemo(()=>accessPrefs.reduceMotion);
 let mapOpener=null;
 $('#open-map').onclick=()=>{
  stopVoice();journeySpeaker.stop();mapOpener=document.activeElement;
@@ -220,7 +222,7 @@ $('#open-map').onclick=()=>{
  const directions=new URL('https://www.google.com/maps/dir/');directions.search=new URLSearchParams({api:'1',origin:'동탄역, 경기도 화성시 동탄역로 151',destination,travelmode:'transit'});$('#destination-directions').href=directions.href;
  $('#bus-search-help').textContent=settings.area==='aileen'?'경기버스에서 동탄역을 검색하고 206·H2 후보의 현재 운행과 목적지 방향을 확인하세요. 같은 이름의 정류장도 방향이 다를 수 있어요.':'경기버스에서 동탄역을 검색한 후 목적지 방향의 정류장과 노선을 확인하세요. A1·B1·C1 같은 시연 번호는 실제 노선이 아니에요.';
  $('#area-map').src='https://www.openstreetmap.org/export/embed.html?bbox=127.075%2C37.182%2C127.110%2C37.209&layer=mapnik';
- $('#map-dialog').showModal();$('#close-map').focus();
+ $('#map-dialog').showModal();motionDemo.reset();$('#close-map').focus();
 };
 $('#close-map').onclick=()=>$('#map-dialog').close();
-$('#map-dialog').addEventListener('close',()=>{ $('#area-map').removeAttribute('src');if(mapOpener?.isConnected)mapOpener.focus();});
+$('#map-dialog').addEventListener('close',()=>{motionDemo.pause(); $('#area-map').removeAttribute('src');if(mapOpener?.isConnected)mapOpener.focus();});
