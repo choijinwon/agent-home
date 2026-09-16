@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {homeStops,routeForDestination,stopConnections,routeBounds} from '../dist/transit-map.js';
+import {homeStops,homeBusRoutes,findHomeBuses,routeForDestination,stopConnections,routeBounds} from '../dist/transit-map.js';
 test('a different destination never inherits the Aileen route',()=>{
  for(const context of [{area:'lake'},{area:'other'},{area:'aileen',mapPoint:[127,37]},{}]){
   assert.equal(routeForDestination(context),null);
@@ -23,4 +23,31 @@ test('H17 uses the east platform and never invents missing map segments',()=>{
  assert.deepEqual(stopConnections(context,'H17').features,[]);
  assert.equal(routeForDestination(context,'H2')[0].number,'55398');
  assert.equal(routeForDestination(context,'unknown'),null);
+});
+
+test('catalog filters verified boarding directions and exposes nearby alternatives',()=>{
+ const context={area:'aileen'};
+ assert.equal(findHomeBuses(context).length,10);
+ assert.equal(findHomeBuses(context,{boarding:'55398',query:'H101'}).length,0);
+ assert.equal(findHomeBuses(context,{boarding:'55399',query:'H101'})[0].direction,'반정아이파크4단지정문 방면');
+ const lotte=findHomeBuses(context,{boarding:'36436',query:'67'})[0];
+ assert.equal(lotte.stationId,'233000137');assert.equal(lotte.stops[0].number,'36436');
+ assert.equal(lotte.stops.at(-1).number,'55405');
+ assert.equal(findHomeBuses(context,{query:'H24'})[0].id,'24');
+ assert.equal(findHomeBuses(context,{query:'없는버스'}).length,0);
+ assert.equal(findHomeBuses({area:'other'}).length,0);
+ assert.equal(findHomeBuses({area:'aileen',mapPoint:[127,37]}).length,0);
+});
+
+test('selected boarding and different alighting stops never inherit default geometry',()=>{
+ const context={area:'aileen',boardingNumber:'36436'};
+ assert.equal(routeForDestination(context,'67')[0].number,'36436');
+ assert.equal(routeForDestination(context,'H2'),null);
+ assert.equal(routeForDestination({area:'aileen'},'19-3').at(-1).number,'55446');
+ assert.deepEqual(stopConnections({area:'aileen'},'19-3').features,[]);
+ for(const route of homeBusRoutes){
+  assert.ok(route.stops.length>1);
+  const bounds=routeBounds({area:'aileen'},null,[127.0955764,37.2003594],route.id);
+  assert.ok(bounds.flat().every(Number.isFinite));
+ }
 });
