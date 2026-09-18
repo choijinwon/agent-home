@@ -62,3 +62,36 @@ body.senior-mode main .app-tabs button[aria-selected=true]{background:#153d35;co
 
 /* Expand route choices without expanding the first screen. */
 .bus-catalog>summary{font-weight:750}.bus-catalog label{display:block;margin:12px 0 6px}.bus-catalog select,.bus-catalog input,#map-route-select,#map-boarding-select{width:100%;max-width:100%;min-height:48px;font:inherit;padding:10px;border:1px solid #9bb4a5;border-radius:10px;background:#fff;color:#173d35}.bus-catalog-card{border:1px solid #c3d6ca;border-radius:14px;padding:16px;margin:12px 0;background:#f7faf6}.bus-catalog-card h3{font-size:24px;margin:0 0 8px}.bus-catalog-card p{margin:6px 0;font-size:16px;line-height:1.5;overflow-wrap:anywhere}.bus-catalog-card .small{font-size:14px}.catalog-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:12px}.catalog-actions button,.catalog-actions a{min-height:48px;display:inline-flex;align-items:center;font-size:16px}.catalog-actions a{color:#20553d}.high-contrast .bus-catalog-card,.high-contrast .bus-catalog input,.high-contrast .bus-catalog select,.high-contrast #map-route-select,.high-contrast #map-boarding-select{background:#000;color:#fff;border-color:#fff}.high-contrast .catalog-actions a{color:#ffeb66}#map-boarding-select{margin-bottom:6px}.transit-map-panel label{display:block;margin:8px 0 4px}
+
+/* Desktop: current action beside the route comparison workspace. */
+.home-primary{min-width:0}
+@media(min-width:1100px){
+ main{max-width:1440px;padding:32px 40px 0}
+ .top{height:80px;padding-inline:max(40px,calc((100vw - 1360px)/2))}
+ .compact-heading{margin-bottom:22px}.compact-heading h1{font-size:32px}
+ .app-tabs{gap:10px;padding:12px 0 18px;margin-bottom:28px}
+ .app-tabs button{flex:0 1 160px;min-height:52px}
+ #view-route{max-width:none}
+ .simple-home{display:grid;grid-template-columns:minmax(360px,.9fr) minmax(0,1.25fr);gap:24px 32px;align-items:start;padding:0;border:0;background:transparent}
+ .home-primary{grid-column:1;grid-row:1;padding:28px;background:#fff;border:1px solid var(--line);border-radius:20px}
+ .home-destination{align-items:flex-start}.home-destination h2{font-size:28px;margin:8px 0 16px}
+ .simple-home #commute-result>.commute-bus{padding:24px;margin-top:18px}
+ .simple-home .commute-bus h3{font-size:28px}.simple-home .home-now{font-size:26px;margin-top:22px}
+ .home-main-actions{gap:12px;margin-top:18px}.home-main-actions button{min-height:64px}
+ .home-secondary-actions{margin-top:8px;flex-wrap:wrap}
+ .simple-home #home-bus-catalog{grid-column:2;grid-row:1 / span 2;margin:0;padding:20px 24px 24px;border:1px solid var(--line);border-radius:20px;background:#fff;min-width:0}
+ .simple-home #home-bus-catalog>summary{font-size:21px;color:var(--green);padding-top:0;min-height:42px}
+ #bus-catalog-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch}
+ .bus-catalog-card{margin:0;display:flex;flex-direction:column;padding:18px}
+ .bus-catalog-card h3{font-size:26px}.bus-catalog-card .catalog-actions{margin-top:auto;padding-top:14px;gap:8px}
+ .catalog-actions button{width:100%;justify-content:center;padding-inline:8px}.catalog-actions a{min-height:44px}
+ .simple-home #home-more{grid-column:1;grid-row:2;margin:0;padding:10px 24px 20px;background:#fff;border:1px solid var(--line);border-radius:16px}
+ #view-voice,#view-location,#view-alerts,#view-settings{max-width:1120px;margin-inline:auto}
+ #map-dialog{width:min(1200px,calc(100vw - 80px));max-width:1200px;padding:32px;max-height:92dvh}
+ #map-dialog #real-map{height:clamp(420px,54vh,640px)}
+ #map-dialog .journey-dialog-head{position:sticky;top:-32px;z-index:5;background:var(--paper,#fff);margin:-1px -8px 12px;padding:12px 8px}
+ footer{margin-top:32px}
+ body[data-text-size=largest] .simple-home{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ body[data-text-size=largest] #bus-catalog-list{grid-template-columns:1fr}
+}
+@media(min-width:1100px) and (max-width:1279px){#bus-catalog-list{grid-template-columns:1fr}.simple-home{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}.home-primary{padding:24px}.home-main-actions{grid-template-columns:1fr}}
