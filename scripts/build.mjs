@@ -15,3 +15,5 @@ console.log('Worker and browser assets built');
 await copyFile('server/nearby.js','dist/server/nearby.js');
 
 await copyFile('server/nearby-stops.js','dist/server/nearby-stops.js');
+
+await copyFile('server/routing.js','dist/server/routing.js');

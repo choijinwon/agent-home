@@ -1,3 +1,4 @@
+import {routingResponse} from './routing.js';
 import {nearbyResponse} from './nearby.js';
 import assets from './assets.js';
 import {normalizeArrivals} from './transit.js';
@@ -5,6 +6,7 @@ let cached=null,pending=null;
 const json=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 export default {async fetch(request,env={}){
  const url=new URL(request.url);
+ if(url.pathname==='/api/routes')return routingResponse(request,env);
  if(url.pathname==='/api/map-config'){
   if(request.method!=='GET')return json({error:'method'},405);
   return json({kakaoJavaScriptKey:env.KAKAO_JAVASCRIPT_KEY||null});
@@ -25,7 +27,7 @@ export default {async fetch(request,env={}){
    return json(await pending);
   }catch{return json({error:'unavailable',message:'도착정보 조회에 실패했어요. 잠시 후 다시 시도해 주세요.'},502);}
  }
- if(url.pathname==='/api/status')return json({transit:Boolean(env.GBIS_SERVICE_KEY),ai:false,walking:false});
+ if(url.pathname==='/api/status')return json({transit:Boolean(env.GBIS_SERVICE_KEY),ai:false,walking:false,routing:Boolean(env.KAKAO_REST_API_KEY)});
  if(url.pathname.startsWith('/api/'))return json({error:'not_found'},404);
  if(!['GET','HEAD'].includes(request.method))return new Response('Method not allowed',{status:405});
  const asset=assets[url.pathname==='/'?'/index.html':url.pathname];
