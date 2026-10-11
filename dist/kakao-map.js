@@ -39,6 +39,7 @@ export function setupKakaoMap(){
    for(const point of points){const position=latLng(point.coordinates);bounds.extend(position);const button=document.createElement('button');button.type='button';button.className='kakao-pin';button.textContent=point.label;button.onclick=()=>focus(point);const overlay=new api.CustomOverlay({position,content:button,yAnchor:1.2});overlay.setMap(map);overlays.push(overlay);}
    map.setBounds(bounds,60,65,60,65);
    el('kakao-status').textContent=stops?route+' · 승차 '+stops[0].name+' → 하차 '+stops.at(-1).name+(stops.every(s=>s.coordinates)?' · 확인된 정류장 위치를 표시했어요.':' · 위치가 확인된 정류장만 표시했어요.'):'출발지와 목적지 위치입니다. 이 목적지의 버스 경로는 아직 확인되지 않았어요.';
+   if(context.liveRoute){showRoute(context.liveRoute,null);el('real-routing-status').textContent='첫 화면에서 선택한 경로 · 예상 '+Math.ceil(context.liveRoute.seconds/60)+'분 · 환승 '+context.liveRoute.transfers+'회. 실시간 도착정보는 미확인입니다.';}
   }catch(error){if(request!==version)return;el('kakao-status').textContent=error.message==='missing'?'카카오지도 연결 준비 중입니다. 3D 지도를 이용해 주세요.':'카카오지도를 불러오지 못했어요. 네트워크 또는 카카오 앱의 사이트 도메인 설정을 확인해 주세요. 3D 지도는 계속 이용할 수 있어요.';el('kakao-retry').hidden=false;}
  }
  function clearRoutes(){routeRequest++;routeAbort?.abort();for(const line of routeLines)line.setMap(null);routeLines=[];el('real-routing-options').replaceChildren();el('fetch-real-routes').disabled=false;el('real-routing-status').textContent='카카오맵에서 실제 경로와 예상 소요 시간을 조회합니다. 실시간 버스 도착 시간은 포함하지 않아요.';}

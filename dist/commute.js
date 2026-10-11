@@ -1,7 +1,7 @@
 import {rankTrips,parseNeeds,tripStages} from './commute-core.js';
 export function setupCommute({getContext,openMap,speak,notify,applyNeeds}){
  const el=id=>document.getElementById(id);
- let mode='demo',snapshot=null,error='',loading=false,generation=0,missed=[],stage=-1,selected=null,expiredAnnounced=false,elapsed=0,lastContext='';
+ let mode='routes',snapshot=null,error='',loading=false,generation=0,missed=[],stage=-1,selected=null,expiredAnnounced=false,elapsed=0,lastContext='';
  const fixtures=()=>[
   {id:'demo-1',name:'시연 버스 A',eta:7-elapsed,ride:12,lastWalk:4,lowFloor:true,stepFreePath:true},
   {id:'demo-2',name:'시연 버스 B',eta:12-elapsed,ride:10,lastWalk:5,lowFloor:false,stepFreePath:null},
@@ -10,8 +10,31 @@ export function setupCommute({getContext,openMap,speak,notify,applyNeeds}){
  function options(){return {walkMinutes:Number(el('commute-walk').value),pace:el('commute-pace').value,buffer:Number(el('commute-buffer').value),stepFree:getContext().stepFree,missed};}
  function valid(){return el('commute-options').reportValidity();}
  function ranked(){return mode==='demo'?rankTrips(fixtures(),options()):[];}
+ function renderReal(){
+  const result=el('commute-result');
+  el('commute-mode-label').textContent='실제 경로 · 카카오맵';
+  el('home-data-note').textContent='예상 소요 시간 기준입니다. 실시간 버스 도착·탑승 가능 여부는 아직 확인할 수 없어요.';
+  el('commute-refresh').hidden=false;el('commute-refresh').textContent=loading?'조회 중…':'실제 경로 새로고침';
+  el('commute-missed').disabled=loading;el('commute-missed').textContent='경로 다시 찾기';
+  if(error){result.textContent='아래 지도 버튼으로 카카오맵 길찾기를 이용할 수 있어요.';return;}
+  if(loading){result.textContent='집까지 실제 이동 경로를 찾고 있어요…';return;}
+  if(!snapshot){result.textContent='실제 경로 새로고침을 눌러 주세요.';return;}
+  if(!snapshot.routes.length){result.textContent='조회된 경로가 없어요. 목적지 위치를 확인해 주세요.';return;}
+  const accessible=getContext().stepFree;
+  if(accessible){const note=document.createElement('p');note.textContent='계단 없는 이동 가능 여부는 미확인입니다. 아래 경로는 이용 가능하다고 추천하지 않으며 확인용으로 제공합니다.';result.append(note);}
+  snapshot.routes.forEach((route,i)=>{
+   const card=document.createElement('article');card.className='commute-bus';
+   const title=document.createElement('h3');title.textContent=(i===0&&!accessible?'예상 시간이 가장 짧은 경로 · ':'')+'약 '+Math.ceil(route.seconds/60)+'분';
+   const buses=[...new Set(route.steps.flatMap(s=>s.vehicles))];
+   const name=document.createElement('p');name.textContent=buses.join(' · ')||'이동 경로';
+   const detail=document.createElement('p');detail.className='small';detail.textContent='환승 '+route.transfers+'회 · '+Math.round(route.distance||0)+'m · 버스 대기 시간은 별도 확인';
+   const button=document.createElement('button');button.type='button';button.className=i===0?'primary':'secondary';button.textContent='이 경로 지도 보기';button.onclick=()=>openMap(route);
+   const read=document.createElement('button');read.type='button';read.className='text-button';read.textContent='경로 듣기';read.onclick=()=>speak('예상 '+Math.ceil(route.seconds/60)+'분. '+route.steps.map(s=>s.guidance).join('. ')+'. 실제 버스 도착 시간과 계단 없는 경로는 확인되지 않았어요.');
+   card.append(title,name,detail,button,read);(i===0?result:el('commute-alternatives')).append(card);
+  });
+ }
  function render(){
-  const ctx=getContext();const signature=JSON.stringify(ctx);if(lastContext&&lastContext!==signature){stage=-1;selected=null;el('commute-stage').hidden=true;}lastContext=signature;el('commute-destination').textContent=ctx.destination;
+  const ctx=getContext();const signature=JSON.stringify(ctx);if(lastContext&&lastContext!==signature){if(mode==='routes'){generation++;snapshot=null;error='';loading=false;queueMicrotask(refresh);}stage=-1;selected=null;el('commute-stage').hidden=true;}lastContext=signature;el('commute-destination').textContent=ctx.destination;
   el('commute-mode-label').textContent=mode==='demo'?'체험 모드':'실시간 조회 · 동탄역 서측';
   el('home-data-note').textContent=mode==='demo'?'체험용 버스·시간이에요. 실제 운행 안내가 아닙니다.':'목적지에 맞는 버스 추천은 아직 제공하지 않아요.';
   el('home-more').hidden=stage>=0;
@@ -35,7 +58,7 @@ export function setupCommute({getContext,openMap,speak,notify,applyNeeds}){
     const start=document.createElement('button');start.className='primary';start.type='button';start.textContent=i===0?'집으로 가기':'이 버스로 안내 시작';start.onclick=()=>{selected={...r,destination:ctx.destination};stage=0;renderStage();el('commute-stage-title').focus();};
     card.append(title,action,reason,start);if(i===0){result.append(card);access.textContent+=' · 집까지 시연 총 '+r.total+'분';other.append(access);}else{card.append(access);other.append(card);}
    }
-  }else if(snapshot){
+  }else if(mode==='live'&&snapshot){
    if(!snapshot.arrivals.length)result.textContent='제공된 도착정보가 없어요. 운행 종료 여부는 공식 화면에서 확인하세요.';
    if(snapshot.arrivals.length)result.textContent='정류장 도착정보를 받았어요. ‘다른 버스 · 자세한 설정’에서 확인하세요.';
    for(const r of snapshot.arrivals){
@@ -43,10 +66,20 @@ export function setupCommute({getContext,openMap,speak,notify,applyNeeds}){
    }
   }else if(!error)result.textContent=loading?'공식 도착정보를 조회하고 있어요.':'새로고침을 눌러 조회하세요.';
   el('commute-live-note').hidden=mode!=='live';
+  el('commute-missed').textContent='버스를 놓쳤어요';
   el('commute-missed').disabled=mode!=='demo'||!ranked().length||stage>=2;
   el('commute-access').textContent=ctx.stepFree?'계단 없는 이동 필요 · 실제 보행 경로·승강기·탑승 공간은 미확인입니다. 체험 모드에서는 검증된 것으로 가정한 시연 경로만 보여줘요.':'실제 접근성 정보: 정류장 보행 경로·승강기·휠체어 탑승 공간 미확인. 저상버스 정보가 있어도 전체 경로 이용 가능을 뜻하지 않아요.';
+  if(mode==='routes')renderReal();
  }
  async function refresh(){
+  if(mode==='routes'){
+   const token=++generation;loading=true;error='';snapshot=null;render();
+   try{const to=getContext().coordinates;if(!to)throw new Error('목적지 위치를 먼저 지정해 주세요.');
+    const response=await fetch('/api/routes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from:[127.0955764,37.2003594],to}),signal:AbortSignal.timeout(15000)});const body=await response.json();if(token!==generation)return;
+    if(!response.ok)throw new Error(body.message||'경로 조회 실패');if(!Array.isArray(body.routes))throw new Error('경로 응답을 확인할 수 없어요.');snapshot={...body,routes:[...body.routes].sort((a,b)=>a.seconds-b.seconds)};
+   }catch(e){if(token===generation)error=e.name==='TimeoutError'?'조회 시간이 초과됐어요. 다시 시도해 주세요.':e.message;}
+   finally{if(token===generation){loading=false;render();}}return;
+  }
   if(mode!=='live')return;
   const token=++generation;loading=true;error='';render();
   try{
@@ -67,13 +100,14 @@ export function setupCommute({getContext,openMap,speak,notify,applyNeeds}){
   render();
  }
  function miss(){
+  if(mode==='routes'){refresh();notify('실제 경로를 다시 조회해요. 놓친 버스의 다음 도착 시간은 아직 확인할 수 없어요.');return;}
   if(mode!=='demo'||stage>=2)return;
   const r=selected||ranked()[0];if(!r)return;
   missed.push(r.id);selected=null;stage=-1;renderStage();render();
   const next=ranked()[0];notify(next?`시연: ${r.name} 대신 ${next.name}, ${next.eta}분 후 도착으로 바꿨어요.`:'조건에 맞는 다음 시연 버스가 없어요.');
  }
  function reset(){generation++;mode='demo';loading=false;el('commute-mode').value='demo';snapshot={updatedAt:Date.now()};elapsed=0;missed=[];selected=null;stage=-1;error='';renderStage();render();}
- el('commute-mode').onchange=()=>{generation++;loading=false;mode=el('commute-mode').value;snapshot=null;error='';selected=null;stage=-1;renderStage();render();if(mode==='live')refresh();else reset();};
+ el('commute-mode').onchange=()=>{generation++;loading=false;mode=el('commute-mode').value;snapshot=null;error='';selected=null;stage=-1;renderStage();render();if(mode==='live'||mode==='routes')refresh();else reset();};
  el('commute-refresh').onclick=refresh;el('commute-reset').onclick=reset;
  el('commute-options').onsubmit=e=>{e.preventDefault();if(valid()){stage=-1;selected=null;renderStage();render();notify('이동 조건으로 추천을 다시 계산했어요.');}};
  el('commute-missed').onclick=miss;
@@ -96,5 +130,5 @@ export function setupCommute({getContext,openMap,speak,notify,applyNeeds}){
  el('commute-chat').onsubmit=e=>{e.preventDefault();handleText(el('commute-text').value);};
  const timer=setInterval(()=>{if(mode==='live'&&snapshot&&Date.now()-snapshot.updatedAt>120000&&!expiredAnnounced){expiredAnnounced=true;render();}},15000);
  window.addEventListener('pagehide',()=>{clearInterval(timer);generation++;});
- reset();return {render,handleText,reset,setPace(pace){el('commute-pace').value=pace==='slow'?'slow':'normal';stage=-1;selected=null;renderStage();render();}};
+ el('commute-mode').value='routes';render();queueMicrotask(refresh);return {render,handleText,reset,setPace(pace){el('commute-pace').value=pace==='slow'?'slow':'normal';stage=-1;selected=null;renderStage();render();}};
 }

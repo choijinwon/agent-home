@@ -1,3 +1,4 @@
+import {destinationFor} from './map-places.js';
 import {setupBusCatalog} from './bus-catalog.js';
 import {setupNearby} from './nearby.js';
 import {setupCommute} from './commute.js';
@@ -13,7 +14,7 @@ let notificationItems=[];
 let voiceGuide=null,voiceRefresh=null,commute=null,busCatalog=null;
 let stationMinutes=0;
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let settings={home:'우리 집',area:'lake',walk:10,access:0},elapsed=0,missed=[],alarm=false,notified=new Set(),toastTimer;
+let settings={home:'동탄역 에일린의뜰',area:'aileen',walk:10,access:0},elapsed=0,missed=[],alarm=false,notified=new Set(),toastTimer;
 try{settings=parseSettings(JSON.parse(localStorage.getItem('homebus-settings')))||settings;}catch{}
 function toast(text){$('#toast').textContent=text;$('#toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').hidden=true,7000);}
 function loadForm(){for(const key of ['home','area','walk','access'])$('#'+key).value=settings[key];$('#walk-value').textContent=settings.walk+'분';$('#walk-number').value=settings.walk;}
@@ -247,7 +248,7 @@ function renderBoarding(){
 }
 
 
-commute=setupCommute({getContext:()=>({destination:settings.home,stepFree:accessPrefs.stepFree}),openMap:()=>$('#open-map').click(),speak:speakAnswer,notify,applyNeeds:needs=>{accessPrefs={...accessPrefs,...needs};try{localStorage.setItem('homebus-access',JSON.stringify(accessPrefs));}catch{}applyAccess();}});
+commute=setupCommute({getContext:()=>({destination:settings.home,coordinates:destinationFor(settings)?.coordinates,stepFree:accessPrefs.stepFree}),openMap:route=>{if(route)pendingMapRoute={liveRoute:route};$('#open-map').click();},speak:speakAnswer,notify,applyNeeds:needs=>{accessPrefs={...accessPrefs,...needs};try{localStorage.setItem('homebus-access',JSON.stringify(accessPrefs));}catch{}applyAccess();}});
 
 setupNearby();
 
