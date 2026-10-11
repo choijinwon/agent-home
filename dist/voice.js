@@ -14,16 +14,18 @@ export function interpretQuestion(input) {
 }
 
 export function makeGuidance(intent,context) {
-  if(intent==='help')return '어떤 버스를 탈지, 언제 오는지, 어디에서 타는지 물어보세요. 화면의 큰 질문 버튼을 눌러도 됩니다.';
-  if(intent==='location')return '위치 탭에서 내 위치 확인 버튼을 눌러 주세요. 위치 사용을 허용하면 지도에서 확인할 수 있습니다. 허용하지 않아도 출발 위치를 직접 선택할 수 있습니다.';
-  if(context.stepFree)return '계단 없는 이동이 필요하도록 설정하셨습니다. 저상버스와 엘리베이터 정보가 아직 연결되지 않아 이용 가능한 경로를 확인할 수 없습니다. 현재 정류장 안내나 교통 운영기관에 접근 가능한 이동 방법을 확인해 주세요.';
-  if(context.area==='aileen')return '동탄역 에일린의뜰로 가시는군요. 2025년 교육청 안내에는 이백육 번과 에이치 이 번을 타고 에일린의뜰 정류장에서 내리는 경로가 나옵니다. 지금 도착 시간과 정확한 승차 위치는 아직 확인할 수 없습니다. 정류장 전광판이나 현장 안내에서 현재 운행을 확인해 주세요.';
-  const r=context.routes[0];
-  if(!r)return '현재 조건에 맞는 시연 버스가 없습니다. 걷는 시간을 조정하거나 시연 초기화를 눌러 주세요. 실제 운행 정보는 아직 연결되지 않았습니다.';
-  const prefix='실제 운행이 아닌 시연 안내입니다. ';
-  if(intent==='arrival')return prefix+`${r.id} 버스는 시연 시간으로 ${r.eta}분 뒤에 도착합니다. 승차장까지 이동에 ${r.walk}분이 필요합니다.`;
-  if(intent==='platform')return prefix+`${r.platform}에서 ${r.id} 버스를 타는 예시입니다. 이동 시간은 ${r.walk}분입니다. 이 승차장 이름과 위치는 가상이므로 실제 길찾기에 사용하지 마세요.`;
-  return prefix+`${r.id} 버스를 추천합니다. ${r.eta}분 뒤에 도착합니다. 승차장까지 ${r.walk}분이 걸립니다. ${Math.max(0,r.eta-r.walk-1)}분 안에 출발하는 예시입니다. 서두르거나 뛰지 마세요.`;
+  if(intent==='help')return '어떤 버스를 탈지, 어디에서 타는지 물어보세요. 현재 선택한 실제 경로를 안내합니다. 버스의 실시간 도착 시간은 아직 확인할 수 없습니다.';
+  if(intent==='location')return '위치 탭에서 내 위치 확인 버튼을 눌러 주세요. 위치 사용을 허용하면 지도에서 확인할 수 있습니다. 허용하지 않아도 동탄역 출발 경로를 이용할 수 있습니다.';
+  if(intent==='arrival')return '버스의 실시간 도착 시간은 아직 확인할 수 없습니다. 화면의 분 표시는 전체 경로의 예상 소요 시간이며 버스가 오는 시간이 아닙니다. 정류장 전광판이나 경기버스에서 확인해 주세요.';
+  const route=context.route;
+  const accessNote=context.stepFree?' 계단 없는 이동이 필요하도록 설정하셨습니다. 저상버스와 엘리베이터 정보가 연결되지 않아 이용 가능한 경로를 확인할 수 없습니다.':'';
+  if(!route)return '현재 조회된 실제 경로가 없습니다. 귀가 화면에서 경로 다시 찾기를 눌러 주세요.'+accessNote;
+  const steps=(route.steps||[]).map(step=>step.guidance).filter(Boolean).join('. ');
+  const duration=Number.isFinite(route.seconds)&&route.seconds>0?' 예상 소요 시간은 약 '+Math.ceil(route.seconds/60)+'분입니다.':'';
+  const transfer=Number.isInteger(route.transfers)&&route.transfers>=0?(route.transfers===0?' 갈아타지 않는 경로입니다.':' 환승 '+route.transfers+'회입니다.'):' 환승 횟수는 확인되지 않았습니다.';
+  const prefix='현재 선택한 실제 경로 안내입니다.';
+  if(intent==='platform')return prefix+' '+(steps||'이 경로의 자세한 승차 안내가 제공되지 않았어요.')+' 정류장 번호와 버스 진행 방향을 현장에서 확인해 주세요.'+accessNote;
+  return prefix+duration+transfer+' '+(steps||'지도에서 이동 구간을 확인해 주세요.')+' 버스 실시간 도착정보는 포함하지 않습니다.'+accessNote;
 }
 
 export function createSpeaker({synthesis,Utterance,onStatus}) {
