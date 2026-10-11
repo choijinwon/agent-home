@@ -42,9 +42,10 @@ export function setupKakaoMap(){
    if(context.liveRoute){showRoute(context.liveRoute,null);el('real-routing-status').textContent='첫 화면에서 선택한 경로 · 예상 '+Math.ceil(context.liveRoute.seconds/60)+'분 · 환승 '+context.liveRoute.transfers+'회. 실시간 도착정보는 미확인입니다.';}
   }catch(error){if(request!==version)return;el('kakao-status').textContent=error.message==='missing'?'카카오지도 연결 준비 중입니다. 3D 지도를 이용해 주세요.':'카카오지도를 불러오지 못했어요. 네트워크 또는 카카오 앱의 사이트 도메인 설정을 확인해 주세요. 3D 지도는 계속 이용할 수 있어요.';el('kakao-retry').hidden=false;}
  }
- function clearRoutes(){routeRequest++;routeAbort?.abort();for(const line of routeLines)line.setMap(null);routeLines=[];el('real-routing-options').replaceChildren();el('fetch-real-routes').disabled=false;el('real-routing-status').textContent='카카오맵에서 실제 경로와 예상 소요 시간을 조회합니다. 실시간 버스 도착 시간은 포함하지 않아요.';}
+ function clearRoutes(){el('map-dialog').classList.remove('showing-live-route');routeRequest++;routeAbort?.abort();for(const line of routeLines)line.setMap(null);routeLines=[];el('real-routing-options').replaceChildren();el('fetch-real-routes').disabled=false;el('real-routing-status').textContent='카카오맵에서 실제 경로와 예상 소요 시간을 조회합니다. 실시간 버스 도착 시간은 포함하지 않아요.';}
  function showRoute(route,button){
   if(!map||!api)return;
+  el('map-dialog').classList.add('showing-live-route');
   for(const overlay of overlays)overlay.setMap(null);overlays=[];
   for(const line of routeLines)line.setMap(null);routeLines=[];const bounds=new api.LatLngBounds();let count=0;
   for(const step of route.steps){if(step.points.length<2)continue;const path=step.points.map(p=>{const pos=latLng(p);bounds.extend(pos);count++;return pos;});const line=new api.Polyline({map,path,strokeWeight:6,strokeColor:step.type==='WALKING'?'#596b79':'#166eae',strokeOpacity:.9,strokeStyle:step.type==='WALKING'?'shortdash':'solid'});routeLines.push(line);}

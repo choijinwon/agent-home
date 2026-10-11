@@ -11,7 +11,7 @@ export function setupCommute({getContext,openMap,speak,notify,applyNeeds}){
  function valid(){return el('commute-options').reportValidity();}
  function ranked(){return mode==='demo'?rankTrips(fixtures(),options()):[];}
  function renderReal(){
-  const result=el('commute-result');
+  const result=el('commute-result');result.replaceChildren();
   el('commute-mode-label').textContent='실제 경로 · 카카오맵';
   el('home-data-note').textContent='예상 소요 시간 기준입니다. 실시간 버스 도착·탑승 가능 여부는 아직 확인할 수 없어요.';
   el('commute-refresh').hidden=false;el('commute-refresh').textContent=loading?'조회 중…':'실제 경로 새로고침';

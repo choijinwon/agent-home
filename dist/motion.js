@@ -8,7 +8,7 @@ export function setupMotionDemo(reducedPreference,onSaveDestination){
  let map=null,loading=null,ready=false,timer,loadTimer,touring=false,generation=0,area='aileen',selected=0,pitched=true,markers=[],destination=null,context={},picking=false;
  const kakao=setupKakaoMap();
  let provider='kakao';
- function setProvider(next){provider=next;pause();stopPicking();el('kakao-pane').hidden=next!=='kakao';document.querySelector('.real-map-wrap').hidden=next==='kakao';for(const id of ['real-map-flat','real-map-tour','real-map-basic','real-map-status'])el(id).hidden=next==='kakao';el('provider-kakao').setAttribute('aria-pressed',String(next==='kakao'));el('provider-3d').setAttribute('aria-pressed',String(next==='3d'));if(next==='kakao')kakao.render(context,selectedRoute);else initialize().then(()=>{map?.resize();showAll();});}
+ function setProvider(next){if(next==='3d')el('map-dialog').classList.remove('showing-live-route');provider=next;pause();stopPicking();el('kakao-pane').hidden=next!=='kakao';document.querySelector('.real-map-wrap').hidden=next==='kakao';for(const id of ['real-map-flat','real-map-tour','real-map-basic','real-map-status'])el(id).hidden=next==='kakao';el('provider-kakao').setAttribute('aria-pressed',String(next==='kakao'));el('provider-3d').setAttribute('aria-pressed',String(next==='3d'));if(next==='kakao')kakao.render(context,selectedRoute);else initialize().then(()=>{map?.resize();showAll();});}
  el('provider-kakao').onclick=()=>setProvider('kakao');el('provider-3d').onclick=()=>setProvider('3d');
  let routeMarkers=[],mapLibrary=null,selectedRoute='H2';
  for(const route of homeBusRoutes){const option=document.createElement('option');option.value=route.id;option.textContent=route.id+' · '+route.direction;el('map-route-select').append(option);}
@@ -84,8 +84,8 @@ export function setupMotionDemo(reducedPreference,onSaveDestination){
    routeMarkers.push(new mapLibrary.Marker({element:pin,anchor:index===(routeForDestination(context,selectedRoute)?.length||0)-1?'bottom':'center'}).setLngLat(stop.coordinates).addTo(map));
   });
  }
- el('map-route-select').onchange=()=>{pause();context={...context,boardingNumber:undefined};selectRoute(el('map-route-select').value);updateTransitRoute();showAll();};
- el('map-boarding-select').onchange=()=>{pause();context={...context,boardingNumber:el('map-boarding-select').value};updateTransitRoute();showAll();};
+ el('map-route-select').onchange=()=>{pause();context={...context,liveRoute:undefined,boardingNumber:undefined};selectRoute(el('map-route-select').value);updateTransitRoute();showAll();};
+ el('map-boarding-select').onchange=()=>{pause();context={...context,liveRoute:undefined,boardingNumber:el('map-boarding-select').value};updateTransitRoute();showAll();};
  el('transit-alight').onclick=()=>{const stops=routeForDestination(context,selectedRoute);if(stops)focusStop(stops.at(-1),stops.length-1);};
  const status=text=>el('real-map-status').textContent=text;
  function pause(){generation++;clearTimeout(timer);touring=false;map?.stop();el('real-map-tour').textContent='위치 순서대로 둘러보기';}
