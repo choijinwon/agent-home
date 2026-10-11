@@ -5,6 +5,10 @@ let cached=null,pending=null;
 const json=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 export default {async fetch(request,env={}){
  const url=new URL(request.url);
+ if(url.pathname==='/api/map-config'){
+  if(request.method!=='GET')return json({error:'method'},405);
+  return json({kakaoJavaScriptKey:env.KAKAO_JAVASCRIPT_KEY||null});
+ }
  if(url.pathname==='/api/nearby-stops')return nearbyResponse(request);
  if(url.pathname==='/api/arrivals'){
   if(request.method!=='GET')return json({error:'method'},405);

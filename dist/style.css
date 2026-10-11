@@ -95,3 +95,6 @@ body.senior-mode main .app-tabs button[aria-selected=true]{background:#153d35;co
  body[data-text-size=largest] #bus-catalog-list{grid-template-columns:1fr}
 }
 @media(min-width:1100px) and (max-width:1279px){#bus-catalog-list{grid-template-columns:1fr}.simple-home{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}.home-primary{padding:24px}.home-main-actions{grid-template-columns:1fr}}
+
+/* Map providers share the selected destination and bus stops. */
+.map-provider-buttons{display:flex;gap:10px;margin:12px 0}.map-provider-buttons button{flex:1;min-height:48px}.map-provider-buttons [aria-pressed=true]{outline:3px solid var(--green,#18745c);outline-offset:2px}#kakao-map{height:420px;min-height:300px;border-radius:18px;background:#edf3ed;overflow:hidden}.kakao-pin{background:#fff;color:#173a32;border:2px solid #18745c;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;white-space:nowrap;box-shadow:0 3px 10px #0002;min-height:44px}.kakao-pin:focus-visible{outline:4px solid #f5ac22}#kakao-status{line-height:1.6}#kakao-pane[hidden],.real-map-wrap[hidden]{display:none!important}@media(min-width:1100px){#kakao-map{height:560px}}@media(max-width:600px){#kakao-map{height:360px}}

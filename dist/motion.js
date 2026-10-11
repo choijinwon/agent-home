@@ -1,9 +1,14 @@
+import {setupKakaoMap} from './kakao-map.js';
 import {homeBusRoutes,boardingStations,routeForDestination,stopConnections,routeBounds} from './transit-map.js';
 import {places as basePlaces,apartmentBoundary,destinationFor} from './map-places.js';
 export function setupMotionDemo(reducedPreference,onSaveDestination){
  const el=id=>document.getElementById(id),system=matchMedia('(prefers-reduced-motion: reduce)');
  const reduced=()=>reducedPreference()||system.matches;
  let map=null,loading=null,ready=false,timer,loadTimer,touring=false,generation=0,area='aileen',selected=0,pitched=true,markers=[],destination=null,context={},picking=false;
+ const kakao=setupKakaoMap();
+ let provider='kakao';
+ function setProvider(next){provider=next;pause();stopPicking();el('kakao-pane').hidden=next!=='kakao';document.querySelector('.real-map-wrap').hidden=next==='kakao';for(const id of ['real-map-flat','real-map-tour','real-map-basic','real-map-status'])el(id).hidden=next==='kakao';el('provider-kakao').setAttribute('aria-pressed',String(next==='kakao'));el('provider-3d').setAttribute('aria-pressed',String(next==='3d'));if(next==='kakao')kakao.render(context,selectedRoute);else initialize().then(()=>{map?.resize();showAll();});}
+ el('provider-kakao').onclick=()=>setProvider('kakao');el('provider-3d').onclick=()=>setProvider('3d');
  let routeMarkers=[],mapLibrary=null,selectedRoute='H2';
  for(const route of homeBusRoutes){const option=document.createElement('option');option.value=route.id;option.textContent=route.id+' · '+route.direction;el('map-route-select').append(option);}
  let places=basePlaces.map(p=>({...p,coordinates:[...p.coordinates]}));
@@ -33,12 +38,13 @@ export function setupMotionDemo(reducedPreference,onSaveDestination){
   for(const button of document.querySelectorAll('[data-home-route]'))button.setAttribute('aria-pressed',String(button.dataset.homeRoute===route.id));
  }
  function focusStop(stop,index){
-  pause();if(!map)return;if(!stop.coordinates){status(stop.name+' '+stop.number+' · 경유 순서는 확인했지만 지도 위치는 아직 미확인이에요.');return;}
+  pause();if(provider==='kakao'){kakao.focus(stop);return;}if(!map)return;if(!stop.coordinates){status(stop.name+' '+stop.number+' · 경유 순서는 확인했지만 지도 위치는 아직 미확인이에요.');return;}
   map.easeTo({center:stop.coordinates,zoom:17,pitch:pitched?45:0,duration:reduced()?0:1000});
   status((index===0?'승차':index===(routeForDestination(context,selectedRoute)?.length||0)-1?'하차':index+'번째 경유')+' · '+stop.name+' · 정류장 '+stop.number);
-  el('real-map').scrollIntoView({block:'center',behavior:'instant'});
+  el(provider==='kakao'?'kakao-map':'real-map').scrollIntoView({block:'center',behavior:'instant'});
  }
  function showAll(){
+  if(provider==='kakao'){kakao.render(context,selectedRoute);return;}
   if(!map)return;
   map.fitBounds(routeBounds(context,destination,places[0].coordinates,selectedRoute),{padding:{top:65,bottom:55,left:45,right:45},pitch:0,bearing:0,duration:reduced()?0:900,maxZoom:16});
   pitched=false;el('real-map-flat').textContent='3D로 보기';el('real-map-flat').setAttribute('aria-pressed','true');
@@ -46,6 +52,7 @@ export function setupMotionDemo(reducedPreference,onSaveDestination){
  }
  function updateTransitRoute(){
   const stops=routeForDestination(context,selectedRoute),known=Boolean(stops);
+  if(provider==='kakao')kakao.render(context,selectedRoute);
   el('transit-map-known').hidden=!known;el('transit-map-unavailable').hidden=known;
   for(const id of ['transit-map-legend','transit-stop-details','transit-alight','transit-map-extras'])el(id).hidden=!known;
   el('transit-stop-list').replaceChildren();selectRoute(selectedRoute);
@@ -81,6 +88,7 @@ export function setupMotionDemo(reducedPreference,onSaveDestination){
  const status=text=>el('real-map-status').textContent=text;
  function pause(){generation++;clearTimeout(timer);touring=false;map?.stop();el('real-map-tour').textContent='위치 순서대로 둘러보기';}
  function focus(index){
+  if(provider==='kakao'){kakao.focus(places[index]);return;}
   if(!map)return;selected=index;const place=places[index];
   map.easeTo({center:place.coordinates,zoom:index===2?16.6:17,pitch:pitched?55:0,bearing:-18,duration:reduced()?0:1400});
   status(place.name+' 위치를 보고 있어요. 이동 경로 안내가 아닌 지도 시점 이동입니다.');
@@ -122,9 +130,11 @@ export function setupMotionDemo(reducedPreference,onSaveDestination){
  }
  function reset(nextContext={}){
   pause();stopPicking();context=nextContext;if(homeBusRoutes.some(r=>r.id===context.routeId))selectedRoute=context.routeId;area=context.area||'aileen';updateDestination();
+  setProvider(provider);
+  if(provider==='kakao')return;
   if(map){map.resize();if(routeForDestination(context,selectedRoute))showAll();else focus(destination?2:0);}else initialize();
  }
- for(const button of document.querySelectorAll('[data-real-place]'))button.onclick=()=>{pause();focus(Number(button.dataset.realPlace));el('real-map').scrollIntoView({block:'center',behavior:'instant'});};
+ for(const button of document.querySelectorAll('[data-real-place]'))button.onclick=()=>{pause();focus(Number(button.dataset.realPlace));el(provider==='kakao'?'kakao-map':'real-map').scrollIntoView({block:'center',behavior:'instant'});};
  el('real-map-flat').onclick=()=>{pause();pitched=!pitched;el('real-map-flat').setAttribute('aria-pressed',String(!pitched));el('real-map-flat').textContent=pitched?'평면으로 보기':'3D로 보기';if(map)map.easeTo({pitch:pitched?55:0,duration:reduced()?0:700});};
  el('real-map-all').onclick=()=>{pause();showAll();};
  el('real-map-tour').onclick=async()=>{
@@ -134,7 +144,7 @@ export function setupMotionDemo(reducedPreference,onSaveDestination){
   touring=true;const id=++generation;el('real-map-tour').textContent='둘러보기 멈추기';let i=0;
   function next(){if(id!==generation)return;const step=tour[i++];if(step===3){selected=3;const stop=routeForDestination(context,selectedRoute).at(-1);if(stop.coordinates)map.easeTo({center:stop.coordinates,zoom:17,pitch:pitched?55:0,duration:1400});status('③ 하차 · '+stop.name+' '+stop.number+(stop.coordinates?'':' · 지도 위치 미확인'));}else focus(step);if(i<tour.length)timer=setTimeout(next,3500);else timer=setTimeout(pause,1600);}next();
  };
- el('destination-pick').onclick=async()=>{pause();await initialize();if(!map)return;picking=true;map.easeTo({pitch:0,duration:0});pitched=false;el('real-map-flat').textContent='3D로 보기';el('real-map-flat').setAttribute('aria-pressed','true');el('destination-crosshair').hidden=false;el('destination-confirm').hidden=false;el('destination-pick').hidden=true;el('real-map').scrollIntoView({block:'center',behavior:'instant'});status('지도를 움직여 가운데 십자표시를 목적지에 맞춘 뒤 저장하세요.');};
+ el('destination-pick').onclick=async()=>{setProvider('3d');pause();await initialize();if(!map)return;picking=true;map.easeTo({pitch:0,duration:0});pitched=false;el('real-map-flat').textContent='3D로 보기';el('real-map-flat').setAttribute('aria-pressed','true');el('destination-crosshair').hidden=false;el('destination-confirm').hidden=false;el('destination-pick').hidden=true;el(provider==='kakao'?'kakao-map':'real-map').scrollIntoView({block:'center',behavior:'instant'});status('지도를 움직여 가운데 십자표시를 목적지에 맞춘 뒤 저장하세요.');};
  el('destination-cancel-pin').onclick=()=>{stopPicking();status('목적지 위치 지정을 취소했어요.');};
  el('destination-save-pin').onclick=()=>{if(!picking||!map)return;pause();const center=map.getCenter().wrap();try{context=onSaveDestination([Number(center.lng.toFixed(6)),Number(Math.max(-85,Math.min(85,center.lat)).toFixed(6))]);stopPicking();updateDestination();focus(2);status('목적지 위치를 연결했어요. 기기에 저장할 수 없는 경우 설정 화면에 안내됩니다.');}catch{status('목적지 위치를 저장하지 못했어요. 다시 시도해 주세요.');}};
  el('real-map-basic').onclick=()=>{pause();el('real-map-fallback').hidden=false;const a=places[0].coordinates,b=destination?.coordinates||a;const bounds=[Math.min(a[0],b[0])-.003,Math.min(a[1],b[1])-.003,Math.max(a[0],b[0])+.003,Math.max(a[1],b[1])+.003];el('real-map-frame').src='https://www.openstreetmap.org/export/embed.html?'+new URLSearchParams({bbox:bounds.join(','),layer:'mapnik'});status('기본 실제 지도를 열었어요.');};
