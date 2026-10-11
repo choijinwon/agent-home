@@ -1,3 +1,4 @@
+import {updateDirectionsLinks} from './route-links.js';
 import {setupKakaoMap} from './kakao-map.js';
 import {homeBusRoutes,boardingStations,routeForDestination,stopConnections,routeBounds} from './transit-map.js';
 import {places as basePlaces,apartmentBoundary,destinationFor} from './map-places.js';
@@ -52,6 +53,7 @@ export function setupMotionDemo(reducedPreference,onSaveDestination){
  }
  function updateTransitRoute(){
   const stops=routeForDestination(context,selectedRoute),known=Boolean(stops);
+  updateDirectionsLinks(places[0],stops,destination);
   if(provider==='kakao')kakao.render(context,selectedRoute);
   el('transit-map-known').hidden=!known;el('transit-map-unavailable').hidden=known;
   for(const id of ['transit-map-legend','transit-stop-details','transit-alight','transit-map-extras'])el(id).hidden=!known;
