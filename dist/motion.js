@@ -8,7 +8,7 @@ export function setupMotionDemo(reducedPreference,onSaveDestination){
  let map=null,loading=null,ready=false,timer,loadTimer,touring=false,generation=0,area='aileen',selected=0,pitched=true,markers=[],destination=null,context={},picking=false;
  const kakao=setupKakaoMap();
  let provider='kakao';
- function setProvider(next){if(next==='3d')el('map-dialog').classList.remove('showing-live-route');provider=next;pause();stopPicking();el('kakao-pane').hidden=next!=='kakao';document.querySelector('.real-map-wrap').hidden=next==='kakao';for(const id of ['real-map-flat','real-map-tour','real-map-basic','real-map-status'])el(id).hidden=next==='kakao';el('provider-kakao').setAttribute('aria-pressed',String(next==='kakao'));el('provider-3d').setAttribute('aria-pressed',String(next==='3d'));if(next==='kakao')kakao.render(context,selectedRoute);else initialize().then(()=>{map?.resize();showAll();});}
+ function setProvider(next){el('map-dialog').dataset.mapProvider=next;if(next==='3d')el('map-dialog').classList.remove('showing-live-route');provider=next;pause();stopPicking();el('kakao-pane').hidden=next!=='kakao';document.querySelector('.real-map-wrap').hidden=next==='kakao';for(const id of ['real-map-flat','real-map-tour','real-map-basic','real-map-status'])el(id).hidden=next==='kakao';el('provider-kakao').setAttribute('aria-pressed',String(next==='kakao'));el('provider-3d').setAttribute('aria-pressed',String(next==='3d'));if(next==='kakao')kakao.render(context,selectedRoute);else initialize().then(()=>{map?.resize();showAll();});}
  el('provider-kakao').onclick=()=>setProvider('kakao');el('provider-3d').onclick=()=>setProvider('3d');
  let routeMarkers=[],mapLibrary=null,selectedRoute='H2';
  for(const route of homeBusRoutes){const option=document.createElement('option');option.value=route.id;option.textContent=route.id+' · '+route.direction;el('map-route-select').append(option);}
@@ -132,7 +132,7 @@ export function setupMotionDemo(reducedPreference,onSaveDestination){
  }
  function reset(nextContext={}){
   pause();stopPicking();context=nextContext;if(homeBusRoutes.some(r=>r.id===context.routeId))selectedRoute=context.routeId;area=context.area||'aileen';updateDestination();
-  setProvider(provider);
+  setProvider(context.liveRoute?'kakao':provider);
   if(provider==='kakao')return;
   if(map){map.resize();if(routeForDestination(context,selectedRoute))showAll();else focus(destination?2:0);}else initialize();
  }

@@ -102,3 +102,62 @@ body.senior-mode main .app-tabs button[aria-selected=true]{background:#153d35;co
 .live-routing{margin:16px 0}.real-routing-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;max-height:260px;overflow:auto;padding:5px}.real-routing-options button{min-height:52px;text-align:left}.real-routing-options [aria-pressed=true]{outline:3px solid #166eae;outline-offset:1px}
 
 .showing-live-route #transit-map-panel,.showing-live-route #boarding-card,.showing-live-route .real-place-buttons,.showing-live-route #transit-stop-details,.showing-live-route #transit-map-extras,.showing-live-route #directions-board,.showing-live-route #directions-home,.showing-live-route #bus-search-help{display:none!important}
+
+/* A calm, readable choice between speed and fewer changes. */
+:root{--paper:#fff;--line:#dce5e1;--muted:#546a61;background:#f4f7f5}
+.home-kicker{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;color:#507565;margin-bottom:7px}
+.compact-heading h1{letter-spacing:-1.2px;font-weight:800}.compact-heading p{margin-top:9px;font-size:15px;line-height:1.6;color:#546a61}
+.home-origin{display:flex;align-items:center;gap:12px;font-size:13px;padding:13px 18px;border:1px solid #d4e0d9;border-radius:14px;background:#fff;white-space:nowrap}.home-origin strong{font-size:17px;color:#163d32}
+.simple-home{border:0;background:transparent;padding:0}.home-primary{padding:24px;background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:0 6px 30px #173d3505}
+.home-destination .eyebrow{font-size:13px}.home-destination h2{font-size:24px;letter-spacing:-.8px;margin:6px 0 12px}.home-destination #home-edit{padding:8px 13px;border:1px solid #d6e2db;border-radius:12px;font-size:14px;color:#315d4c;min-height:44px}
+.simple-home #commute-mode-label{font-size:12px;font-weight:650;background:#edf4ee;color:#32694e;border-radius:6px;margin:0 0 8px}.simple-home #home-data-note{font-size:13px;line-height:1.65;max-width:42em;margin:0 0 20px;color:#546a61}
+.route-preferences{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:5px;margin:0 0 14px;background:#edf2ef;border-radius:14px}
+.route-preference{min-height:49px;padding:10px 6px;border:1px solid transparent;border-radius:10px;font-size:15px;font-weight:700;color:#53675d;background:transparent;white-space:normal}
+.route-preference[aria-pressed=true]{background:#fff;color:#173f31;border-color:#d7e2dc;box-shadow:0 2px 4px #1d49350b}
+.route-hero{border-radius:19px;background:#173e33;color:#fff;padding:25px;overflow-wrap:anywhere}
+.route-hero .route-eyebrow{font-size:13px;font-weight:650;color:#d7e8d9;letter-spacing:.02em;margin:0 0 8px}
+.route-duration{display:flex;align-items:baseline;gap:7px;margin:0;color:#fff;line-height:1.2;font-size:22px;font-weight:500}.route-duration strong{font-size:66px;line-height:1.1;letter-spacing:-3px;font-weight:800;font-variant-numeric:tabular-nums}
+.route-meta{color:#d5e4dc;font-size:14px;line-height:1.6;margin:10px 0 20px}
+.route-legs{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;margin:14px 0 22px}.route-leg{flex:1 1 125px;min-width:0;border:1px solid #5e7e6d;border-radius:12px;padding:12px;background:#ffffff09;font-size:13px;line-height:1.7}.route-leg-vehicles{display:block;font-size:18px;font-weight:750;letter-spacing:-.4px;color:#f0ffce;overflow-wrap:anywhere}
+.route-actions{display:grid;grid-template-columns:1fr auto;gap:9px;align-items:stretch}.route-hero .primary{background:#d9f49a;color:#173e33;min-height:56px;font-size:17px;border-radius:12px;justify-content:center}.route-hero .route-actions .secondary{border:1px solid #789282;border-radius:12px;color:#fff;min-height:56px;font-size:14px;padding:10px 12px;white-space:normal}
+.route-guidance{margin:17px 0 0;border-top:1px solid #537561}.route-guidance summary{min-height:48px;display:list-item;padding:14px 0 0;color:#e4eee5;font-size:14px;cursor:pointer}.route-timeline{list-style:none;margin:16px 0 0;padding:0;counter-reset:leg}.route-timeline li{position:relative;padding:0 0 18px 36px;font-size:14px;line-height:1.7;color:#e0eae3;counter-increment:leg}.route-timeline li:before{content:counter(leg);position:absolute;left:0;top:1px;width:25px;height:25px;border-radius:50%;background:#d9f49a;color:#183e33;text-align:center;font-weight:800}.route-step-label{font-weight:750;display:block;margin-bottom:4px}
+.route-comparison{min-width:0;border:1px solid var(--line);border-radius:24px;background:#fff;padding:26px;margin-top:20px}.comparison-heading{display:flex;justify-content:space-between;align-items:center;gap:16px}.comparison-heading h2{font-size:22px;margin:0;letter-spacing:-.7px}.comparison-symbol{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:#edf4ed;font-size:24px;color:#376548}.comparison-help{font-size:13px;color:#61776b;margin:12px 0 18px}
+.route-option{width:100%;display:block;text-align:left;border:1px solid #d7e2db;border-radius:16px;padding:18px;margin:0 0 12px;background:#fcfdfc;color:#173d35;white-space:normal}.route-option:hover{border-color:#739980;background:#f2f7ed}.route-option[aria-pressed=true]{border:2px solid #55744a;padding:17px;background:#f0f6e8}.route-option-heading{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-weight:700;font-size:14px}.route-option-time{font-size:27px;font-weight:800;letter-spacing:-1px;color:#173e33;white-space:nowrap}.route-option-buses{display:block;font-size:16px;line-height:1.65;font-weight:650;margin:8px 0 5px;overflow-wrap:anywhere}.route-option-meta{display:block;color:#5c6e65;font-size:13px;line-height:1.65}.route-other-options summary{min-height:48px;padding:12px 0;cursor:pointer;color:#3c634c;font-size:14px}
+.simple-home .home-main-actions{margin-top:16px}.simple-home .home-main-actions button{background:#f6f8f6;border:1px solid #d4e0d9;color:#294c3c;min-height:52px;font-size:15px}.home-secondary-actions button{font-size:14px;color:#4d6959}.simple-home #home-more,.simple-home #home-bus-catalog{border:1px solid var(--line);border-radius:16px;background:#fff;margin:16px 0 0;padding:6px 20px}.simple-home #home-more>summary,.simple-home #home-bus-catalog>summary{font-size:15px;padding:14px 0;color:#466453;min-height:50px}
+@media(min-width:1100px){.simple-home{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px 28px}.home-primary{grid-column:1;grid-row:1 / span 3;padding:28px}.route-comparison{grid-column:2;grid-row:1;margin:0;padding:28px}.simple-home #home-bus-catalog{grid-column:2;grid-row:2;margin:0;padding:6px 22px}.simple-home #home-more{grid-column:2;grid-row:3;margin:0;padding:6px 22px}.compact-heading{align-items:center;margin-bottom:24px}.app-tabs{margin-bottom:24px}.home-primary .route-hero{padding:28px}.home-primary .route-duration strong{font-size:76px}}
+@media(max-width:1099px){.home-origin{display:none}.route-comparison{padding:20px}}
+@media(max-width:640px){main{padding:22px 16px 96px}.top{height:64px;padding-inline:18px}.brand{font-size:22px}.brand-sub{display:none}.demo-pill{font-size:11px;padding:6px 9px}.compact-heading{margin-bottom:18px}.compact-heading h1{font-size:25px}.compact-heading p{font-size:13px;margin-top:7px}.home-kicker{font-size:11px}.home-primary{padding:19px;border-radius:21px}.home-destination h2{font-size:22px}.route-hero{padding:21px}.route-duration strong{font-size:60px}.route-comparison{border-radius:20px}.route-actions{grid-template-columns:1fr}.route-hero .route-actions .secondary{min-height:44px}.app-tabs{position:fixed;top:auto;bottom:0;left:0;right:0;z-index:15;margin:0;padding:8px 12px calc(8px + env(safe-area-inset-bottom));gap:4px;background:#fffffff5;backdrop-filter:blur(12px);border-top:1px solid #d3e1d8;border-bottom:0;box-shadow:0 -4px 20px #123c3308}.app-tabs button{min-height:48px;border:0;border-radius:12px;font-size:14px;background:transparent}.app-tabs button[aria-selected=true]{background:#e3efdc;color:#234633}.route-option{padding:16px}.route-option[aria-pressed=true]{padding:15px}.route-option-time{font-size:24px}.home-secondary-actions{flex-wrap:wrap}.simple-home #home-data-note{margin-bottom:16px;font-size:12px}}
+@media(max-width:360px){.home-primary{padding:14px}.route-hero{padding:17px}.home-main-actions{grid-template-columns:1fr}.route-option-heading{flex-wrap:wrap}}
+body.high-contrast .route-hero,body.high-contrast .route-comparison,body.high-contrast .home-primary,body.high-contrast .route-option,body.high-contrast .route-preference{background:#000;color:#fff;border:1px solid #fff}body.high-contrast .route-hero *,body.high-contrast .route-comparison *,body.high-contrast .home-kicker,body.high-contrast .compact-heading p{color:#fff}body.high-contrast .route-preferences{background:#222}body.high-contrast .route-preference[aria-pressed=true],body.high-contrast .route-option[aria-pressed=true]{outline:3px solid #ffeb66}body.high-contrast .route-hero .primary{background:#ffeb66;color:#000}body.high-contrast .app-tabs{background:#000}
+body[data-text-size=largest] .route-actions{grid-template-columns:1fr}body[data-text-size=largest] .route-option-heading{flex-wrap:wrap}body[data-text-size=largest] .route-legs{flex-direction:column}body[data-text-size=largest] .route-leg{flex-basis:auto}
+
+/* Match the home card specificity so the recommendation retains its contrast. */
+.simple-home #commute-result>.route-hero{background:#173e33;color:#fff;border:1px solid #173e33;padding:25px}
+.simple-home .commute-bus h3.route-duration{font-size:22px;line-height:1.2;color:#fff}
+.simple-home .route-hero .primary{font-size:17px;min-height:56px}
+.route-hero .route-actions .secondary{background:transparent;color:#fff}
+.route-comparison-note{font-size:13px;line-height:1.6;color:#546a61;margin:0 0 15px}
+.route-option-action{display:block;font-size:13px;font-weight:600;color:#3e6750;margin-top:8px}
+.route-access-note{padding:12px;border:1px solid #86a794;border-radius:10px;font-size:14px;line-height:1.7;color:#fff}
+.route-empty{padding:22px;border-radius:16px;background:#f2f6f0;line-height:1.8}
+.showing-live-route .reference-map-copy{display:none}
+#map-dialog[data-map-provider=kakao] .map-3d-note{display:none}
+@media(max-width:640px){.simple-home #commute-result>.route-hero{padding:21px}}
+@media(max-width:360px){.simple-home #commute-result>.route-hero{padding:17px}}
+body.high-contrast .simple-home #commute-result>.route-hero{background:#000;border-color:#fff}
+
+.route-hero-single{display:grid;grid-template-columns:1fr 1.2fr;column-gap:16px;align-items:center}
+.route-hero-single .route-eyebrow{grid-column:1 / -1}
+.route-hero-single .route-duration{grid-column:1;grid-row:2}
+.route-hero-single .route-legs{grid-column:2;grid-row:2;margin:0}
+.route-hero-single .route-leg{border:0;border-left:1px solid #65826e;border-radius:0;background:none;padding:2px 0 2px 15px;flex-basis:auto}
+.route-hero-single .route-meta{grid-column:1 / -1;margin:18px 0}
+.route-hero-single .route-actions,.route-hero-single .route-guidance,.route-hero-single .route-access-note{grid-column:1 / -1}
+.simple-home .route-hero .route-guidance{margin:16px 0 0}
+.route-hero .route-guidance .small{color:#d6e4d9}
+@media(min-width:1100px){.top{height:64px}main{padding-top:24px}.compact-heading{margin-bottom:16px}.compact-heading h1{margin:5px 0}.app-tabs{padding:6px 0 14px;margin-bottom:20px}.home-primary{padding:24px}.simple-home #commute-result>.route-hero{margin-top:12px}}
+@media(max-width:640px){.route-actions{grid-template-columns:1.2fr 1fr}.route-hero .route-actions button{padding:10px 6px;gap:0}.simple-home #home-data-note{margin-bottom:12px}.compact-heading p{display:none}.compact-heading{margin-bottom:14px}.home-kicker{margin-bottom:5px}.route-hero-single{column-gap:10px}.route-hero-single .route-leg{padding-left:12px}.route-hero-single .route-leg-vehicles{font-size:18px}.route-hero-single .route-duration strong{font-size:54px}}
+body[data-text-size=largest] .route-hero-single{display:block}body[data-text-size=largest] .route-hero-single .route-leg{border-left:0;padding-left:0}
+.route-hero-single{grid-template-columns:max-content minmax(0,1fr)}
+.route-duration{white-space:nowrap}.route-duration strong{flex-shrink:0}
+@media(max-width:640px){.route-hero-single .route-duration{gap:4px}.route-hero-single .route-duration strong{font-size:50px}}

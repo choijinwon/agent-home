@@ -1,5 +1,6 @@
 import {routeForDestination} from './transit-map.js';
 import {places,destinationFor} from './map-places.js';
+import {routeVehicleSummary,routeMinutes,routeTransferLabel} from './route-choice.js';
 let sdkPromise;
 function loadSDK(){
  if(globalThis.kakao?.maps?.Map)return Promise.resolve(globalThis.kakao.maps);
@@ -49,7 +50,13 @@ export function setupKakaoMap(){
   for(const overlay of overlays)overlay.setMap(null);overlays=[];
   for(const line of routeLines)line.setMap(null);routeLines=[];const bounds=new api.LatLngBounds();let count=0;
   for(const step of route.steps){if(step.points.length<2)continue;const path=step.points.map(p=>{const pos=latLng(p);bounds.extend(pos);count++;return pos;});const line=new api.Polyline({map,path,strokeWeight:6,strokeColor:step.type==='WALKING'?'#596b79':'#166eae',strokeOpacity:.9,strokeStyle:step.type==='WALKING'?'shortdash':'solid'});routeLines.push(line);}
-  if(count)map.setBounds(bounds,60,60,60,60);
+  const destination=destinationFor(lastContext);
+  for(const point of [{...places[0],label:'출발 · 동탄역'},...(destination?[{...destination,label:'목적지 · '+destination.name}]:[])]){
+   const position=latLng(point.coordinates);bounds.extend(position);
+   const marker=document.createElement('button');marker.type='button';marker.className='kakao-pin';marker.textContent=point.label;marker.onclick=()=>focus(point);
+   const overlay=new api.CustomOverlay({position,content:marker,yAnchor:1.2});overlay.setMap(map);overlays.push(overlay);
+  }
+  map.setBounds(bounds,60,60,60,60);
   for(const b of el('real-routing-options').querySelectorAll('button'))b.setAttribute('aria-pressed',String(b===button));
   el('kakao-status').textContent=route.steps.map(s=>s.guidance).filter(Boolean).join(' → ')+(count?' · 파란 실선: 교통수단 / 회색 점선: 도보':' · 지도 경로 좌표 없음');
  }
@@ -60,7 +67,7 @@ export function setupKakaoMap(){
    const response=await fetch('/api/routes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from:places[0].coordinates,to:destination.coordinates}),signal:routeAbort.signal});const data=await response.json();if(id!==routeRequest)return;if(!response.ok)throw new Error(data.message||'경로 조회에 실패했어요.');
    el('real-routing-options').replaceChildren();
    el('real-routing-status').textContent=data.routes.length?data.routes.length+'개 경로 · '+new Date(data.updatedAt).toLocaleTimeString('ko-KR')+' 조회 · 예상 소요 시간이며 버스 실시간 도착·탑승 가능 여부는 미확인입니다. 지도는 아래에서 선택한 조회 경로를 표시합니다.':'조회 가능한 경로가 없어요. 목적지를 확인해 주세요.';
-   data.routes.forEach((route,index)=>{const b=document.createElement('button');b.type='button';b.className='secondary';b.setAttribute('aria-pressed','false');const lines=[...new Set(route.steps.flatMap(s=>s.vehicles))];b.textContent=(lines.join(' · ')||'이동 경로')+' / 약 '+Math.ceil(route.seconds/60)+'분 / 환승 '+route.transfers+'회';b.onclick=()=>showRoute(route,b);el('real-routing-options').append(b);if(index===0)showRoute(route,b);});
+   data.routes.forEach((route,index)=>{const b=document.createElement('button');b.type='button';b.className='secondary';b.setAttribute('aria-pressed','false');b.textContent=routeVehicleSummary(route)+' / 약 '+routeMinutes(route)+'분 / '+routeTransferLabel(route);b.onclick=()=>showRoute(route,b);el('real-routing-options').append(b);if(index===0)showRoute(route,b);});
   }catch(error){if(id===routeRequest&&error.name!=='AbortError')el('real-routing-status').textContent=error.message;}
   finally{if(id===routeRequest)el('fetch-real-routes').disabled=false;}
  };

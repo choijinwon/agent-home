@@ -279,11 +279,4 @@ $('#simple-slow').onclick=()=>{
 $('#commute-options').addEventListener('submit',syncSimplePreferences);
 syncSimplePreferences();
 
-// Expand the comparison panel on desktop; leave mobile choices compact.
-const desktopLayout=window.matchMedia('(min-width: 1100px)');
-function syncDesktopLayout(){
- const catalog=document.getElementById('home-bus-catalog');
- if(!desktopLayout.matches&&catalog.contains(document.activeElement))catalog.querySelector('summary').focus();
- catalog.open=desktopLayout.matches;
-}
-desktopLayout.addEventListener('change',syncDesktopLayout);syncDesktopLayout();
+// Reference bus catalog stays collapsed until explicitly opened.
