@@ -161,3 +161,5 @@ body[data-text-size=largest] .route-hero-single{display:block}body[data-text-siz
 .route-hero-single{grid-template-columns:max-content minmax(0,1fr)}
 .route-duration{white-space:nowrap}.route-duration strong{flex-shrink:0}
 @media(max-width:640px){.route-hero-single .route-duration{gap:4px}.route-hero-single .route-duration strong{font-size:50px}}
+/* Keep hosting attribution visible without covering mobile navigation. */
+@media(max-width:640px){#nl-badge-frame{position:relative!important;display:block;bottom:auto!important;right:auto!important;margin:12px 16px 88px!important;max-width:calc(100% - 32px)}}
