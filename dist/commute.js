@@ -70,7 +70,7 @@ export function setupCommute({getContext,openMap,speak,notify,applyNeeds}){
  function render(){
   const ctx=getContext(),signature=JSON.stringify(ctx);
   if(lastContext&&lastContext!==signature&&mode==='routes'){generation++;snapshot=null;selectedRealIndex=null;error='';loading=false;queueMicrotask(refresh);}
-  lastContext=signature;el('commute-destination').textContent=ctx.destination;
+  lastContext=signature;el('commute-destination').textContent=ctx.destination;el('portal-destination').textContent=ctx.destination;
   el('commute-mode-label').textContent='실시간 조회 · 동탄역 서측';
   el('home-data-note').textContent='서측 정류장 도착정보 · 목적지별 경로 추천과 별도';
   el('commute-refresh').disabled=loading;el('commute-refresh').textContent=loading?'조회 중…':'도착정보 새로고침';
